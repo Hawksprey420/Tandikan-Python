@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Home | Mantis Admin{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'src/assets/images/favicon.svg' %}" type="image/x-icon">
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'src/assets/fonts/tabler-icons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'src/assets/fonts/feather.css' %}">
+    <link rel="stylesheet" href="{% static 'src/assets/fonts/fontawesome.css' %}">
+    <link rel="stylesheet" href="{% static 'src/assets/fonts/material.css' %}">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'src/assets/css/style.css' %}" id="main-style-link">
+    <link rel="stylesheet" href="{% static 'src/assets/css/style-preset.css' %}">
+</head>
+
+<body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
+
+    <!-- Loader -->
+    <div class="loader-bg">
+        <div class="loader-track"><div class="loader-fill"></div></div>
+    </div>
+
+    <!-- Sidebar -->
+    {% include 'partials/sidebar.html' %}
+
+    <!-- Header -->
+    {% include 'partials/header.html' %}
+
+    <!-- Main Content -->
+    <div class="pc-container">
+        <div class="pc-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer Scripts -->
+    <script src="{% static 'src/assets/js/vendor-all.min.js' %}"></script>
+    <script src="{% static 'src/assets/js/plugins/bootstrap.min.js' %}"></script>
+    <script src="{% static 'src/assets/js/plugins/feather.min.js' %}"></script>
+    <script src="{% static 'src/assets/js/pcoded.min.js' %}"></script>
+
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+</html>

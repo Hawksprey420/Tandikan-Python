@@ -12,9 +12,6 @@ def admin_dashboard(request):
 def student_dashboard(request):
     return render(request, "tandikan_website/student/dashboard.html")
 
-def officer_dashboard(request):
-    return render(request, "tandikan_website/admin/dashboard.html")
-
 def register_view(request):
     return render(request, "tandikan_website/registration/register.html")
 
@@ -34,7 +31,7 @@ def login_view(request):
             elif user.role == "student":
                 return redirect("student_dashboard")
             else:
-                return redirect("officer_dashboard")
+                return redirect("admin_dashboard")
 
         else:
             messages.error(request, "Invalid username or password.")
