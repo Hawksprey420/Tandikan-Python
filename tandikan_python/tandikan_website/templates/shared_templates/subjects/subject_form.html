@@ -1,0 +1,46 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}{% if subject %}Edit{% else %}Add{% endif %} Subject{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5>{% if subject %}Edit{% else %}Add{% endif %} Subject</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Subject Code</label>
+                        <input type="text" name="subject_code" class="form-control" value="{{ subject.subject_code|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subject Name</label>
+                        <input type="text" name="subject_name" class="form-control" value="{{ subject.subject_name|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Units</label>
+                        <input type="number" name="units" class="form-control" value="{{ subject.units|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Year Level</label>
+                        <input type="number" name="year_level" class="form-control" value="{{ subject.year_level|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Semester</label>
+                        <select name="semester" class="form-select" required>
+                            <option value="1" {% if subject.semester == '1' %}selected{% endif %}>1st Semester</option>
+                            <option value="2" {% if subject.semester == '2' %}selected{% endif %}>2nd Semester</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{% url 'subject_list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

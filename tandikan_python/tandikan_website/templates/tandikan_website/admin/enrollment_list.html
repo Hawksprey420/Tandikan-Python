@@ -1,0 +1,44 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}Enrollment List{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Enrollment List</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Term</th>
+                                <th>Date Enrolled</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enrollment in enrollments %}
+                            <tr>
+                                <td>{{ enrollment.student.student_id }}</td>
+                                <td>{{ enrollment.student.last_name }}, {{ enrollment.student.first_name }}</td>
+                                <td>{{ enrollment.term }}</td>
+                                <td>{{ enrollment.date_enrolled }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No enrollments found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

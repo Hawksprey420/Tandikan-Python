@@ -1,0 +1,27 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}{% if college %}Edit{% else %}Add{% endif %} College{% endblock %}
+
+{% block content %}
+<div class='row'>
+    <div class='col-md-8 offset-md-2'>
+        <div class='card'>
+            <div class='card-header'>
+                <h5>{% if college %}Edit{% else %}Add{% endif %} College</h5>
+            </div>
+            <div class='card-body'>
+                <form method='post'>
+                    {% csrf_token %}
+                    <div class='mb-3'>
+                        <label class='form-label'>College Name</label>
+                        <input type='text' name='college_name' class='form-control' value='{{ college.college_name|default:'' }}' required>
+                    </div>
+                    <button type='submit' class='btn btn-primary'>Save</button>
+                    <a href='{% url 'college_list' %}' class='btn btn-secondary'>Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

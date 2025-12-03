@@ -42,55 +42,28 @@
             <div class="navbar-content">
                 <ul class="pc-navbar">
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
+                        <a href="{% url 'student_dashboard' %}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
                             <span class="pc-mtext">Dashboard</span>
                         </a>
                     </li>
 
                     <li class="pc-item pc-caption">
-                        <label>List functions</label>
+                        <label>Student Services</label>
                         <i class="ti ti-dashboard"></i>
                     </li>
 
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-typography"></i></span>
-                            <span class="pc-mtext">Your subjects</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Accounting/Cashier records</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Rooms</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">System logs</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item pc-caption">
-                        <label>Tandikan functions:</label>
-                        <i class="ti ti-news"></i>
-                    </li>
-
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
+                        <a href="{% url 'enrollment' %}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
-                            <span class="pc-mtext">Register subjects</span>
+                            <span class="pc-mtext">Enrollment</span>
+                        </a>
+                    </li>
+
+                    <li class="pc-item">
+                        <a href="{% url 'assessment' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-receipt"></i></span>
+                            <span class="pc-mtext">Assessment & Fees</span>
                         </a>
                     </li>
 
@@ -110,7 +83,7 @@
         <div class="header-wrapper">
             <div class="me-auto pc-mob-drp">
                 <ul class="list-unstyled">
-                    <li class="pc-h-item pc-sidebar-collapse">
+                    <li class="pc-h-item pc-sidebar-apse">
                         <a href="#" class="pc-head-link ms-0" id="sidebar-hide"><i class="ti ti-menu-2"></i></a>
                     </li>
                     <li class="pc-h-item pc-sidebar-popup">

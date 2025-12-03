@@ -1,0 +1,124 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3>System Reports</h3>
+            <a href="{% url 'export_reports' %}" class="btn btn-success">
+                <i class="ti ti-file-export"></i> Export to CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Enrollment per Course/Year -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Enrollment per Course & Year Level</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Program</th>
+                                <th>Year Level</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in enrollment_stats %}
+                            <tr>
+                                <td>{{ stat.student__program__program_code }}</td>
+                                <td>{{ stat.student__year_level }}</td>
+                                <td><span class="badge bg-primary">{{ stat.count }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment per Semester -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Total Enrollment per Semester</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Academic Year</th>
+                                <th>Semester</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in semester_stats %}
+                            <tr>
+                                <td>{{ stat.term__academic_year }}</td>
+                                <td>{{ stat.term__semester }}</td>
+                                <td><span class="badge bg-info">{{ stat.count }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Collection Report -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Daily Collection Report</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Amount Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in collection_stats %}
+                            <tr>
+                                <td>{{ stat.date_paid__date }}</td>
+                                <td>{{ stat.total }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center">No collections recorded.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

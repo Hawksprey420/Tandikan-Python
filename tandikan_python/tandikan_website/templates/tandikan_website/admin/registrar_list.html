@@ -1,0 +1,50 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}Registrar List{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Registrar List</h5>
+                <a href="{% url 'registrar_create' %}" class="btn btn-primary btn-sm">Add Registrar</a>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registrar in registrars %}
+                            <tr>
+                                <td>{{ registrar.last_name }}, {{ registrar.first_name }}</td>
+                                <td>{{ registrar.email }}</td>
+                                <td>
+                                    <a href="{% url 'registrar_delete' registrar.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No registrars found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

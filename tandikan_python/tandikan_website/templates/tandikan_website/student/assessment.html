@@ -1,0 +1,79 @@
+{% extends "student_base.html" %}
+{% load static %}
+
+{% block title %}Assessment & Fees{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Assessment Form</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Student:</strong> {{ assessment.enrollment.student.user.last_name }}, {{ assessment.enrollment.student.user.first_name }}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong>Date:</strong> {{ assessment.date_generated|date:"F d, Y" }}
+                    </div>
+                </div>
+                
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <td>Total Units</td>
+                            <td class="text-end">{{ assessment.total_units }}</td>
+                        </tr>
+                        <tr>
+                            <td>Tuition Fee</td>
+                            <td class="text-end">{{ assessment.tuition_fee }}</td>
+                        </tr>
+                        <tr>
+                            <td>Other Fees</td>
+                            <td class="text-end">{{ assessment.other_fees }}</td>
+                        </tr>
+                        <tr class="table-primary fw-bold">
+                            <td>Total Amount</td>
+                            <td class="text-end">{{ assessment.total_amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Payment History</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for payment in payments %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">{{ payment.date_paid|date:"M d, Y" }}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill">{{ payment.amount_paid }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted">No payments recorded.</li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total Paid:</span>
+                        <span>{{ total_paid }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold text-danger mt-2">
+                        <span>Balance:</span>
+                        <span>{{ balance }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

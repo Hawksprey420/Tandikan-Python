@@ -42,49 +42,88 @@
             <div class="navbar-content">
                 <ul class="pc-navbar">
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
+                        <a href="{% url 'admin_dashboard' %}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
                             <span class="pc-mtext">Dashboard</span>
                         </a>
                     </li>
 
                     <li class="pc-item pc-caption">
-                        <label>List functions</label>
+                        <label>Management</label>
                         <i class="ti ti-dashboard"></i>
                     </li>
 
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-typography"></i></span>
+                        <a href="{% url 'college_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-building-arch"></i></span>
                             <span class="pc-mtext">Colleges</span>
                         </a>
                     </li>
 
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-color-swatch"></i></span>
+                        <a href="{% url 'student_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-user"></i></span>
+                            <span class="pc-mtext">Students</span>
+                        </a>
+                    </li>
+
+                    <li class="pc-item">
+                        <a href="{% url 'faculty_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-users"></i></span>
                             <span class="pc-mtext">Faculty</span>
                         </a>
                     </li>
 
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Accounting/Cashier</span>
+                        <a href="{% url 'registrar_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-user-check"></i></span>
+                            <span class="pc-mtext">Registrar</span>
+                        </a>
+                    </li>
+
+                    <li class="pc-item pc-hasmenu">
+                        <a href="#!" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-book"></i></span>
+                            <span class="pc-mtext">Subjects</span>
+                            <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
+                        </a>
+                        <ul class="pc-submenu">
+                            <li class="pc-item"><a class="pc-link" href="{% url 'subject_list' %}">Subject List</a></li>
+                            <li class="pc-item"><a class="pc-link" href="{% url 'prerequisite_list' %}">Prerequisites</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="pc-item">
+                        <a href="{% url 'schedule_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-calendar"></i></span>
+                            <span class="pc-mtext">Class Schedules</span>
                         </a>
                     </li>
 
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Rooms</span>
+                        <a href="{% url 'academic_term_list' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-calendar-event"></i></span>
+                            <span class="pc-mtext">Academic Terms</span>
                         </a>
                     </li>
 
+                    <li class="pc-item pc-hasmenu">
+                        <a href="#!" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-settings"></i></span>
+                            <span class="pc-mtext">Tandikan Functions</span>
+                            <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
+                        </a>
+                        <ul class="pc-submenu">
+                            <li class="pc-item"><a class="pc-link" href="{% url 'admin_enrollment_list' %}">Enrollments</a></li>
+                            <li class="pc-item"><a class="pc-link" href="{% url 'admin_assessment_list' %}">Assessments</a></li>
+                            <li class="pc-item"><a class="pc-link" href="{% url 'admin_payment_list' %}">Payments</a></li>
+                        </ul>
+                    </li>
+
                     <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">System logs</span>
+                        <a href="{% url 'reports' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
+                            <span class="pc-mtext">Reports</span>
                         </a>
                     </li>
 
@@ -139,35 +178,7 @@
                         <label>Tandikan functions:</label>
                         <i class="ti ti-news"></i>
                     </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-lock"></i></span>
-                            <span class="pc-mtext">Add student</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-lock"></i></span>
-                            <span class="pc-mtext">Add faculty</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-lock"></i></span>
-                            <span class="pc-mtext">Add staff</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
-                            <span class="pc-mtext">Register subjects</span>
-                        </a>
-                    </li>
-
+                    
                     <li class="pc-item">
                         <a href="#" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-brand-chrome"></i></span>

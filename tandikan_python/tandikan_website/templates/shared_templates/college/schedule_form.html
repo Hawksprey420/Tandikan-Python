@@ -1,0 +1,57 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}Add Schedule{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5>Add Class Schedule</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <select name="subject" class="form-select" required>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.subject_id }}">{{ subject.subject_code }} - {{ subject.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Instructor</label>
+                        <select name="instructor" class="form-select" required>
+                            {% for instructor in instructors %}
+                            <option value="{{ instructor.faculty_id }}">{{ instructor.last_name }}, {{ instructor.first_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Day</label>
+                        <input type="text" name="day" class="form-control" placeholder="e.g. MWF, TTh" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Time</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Room</label>
+                        <input type="text" name="room" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{% url 'schedule_list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
