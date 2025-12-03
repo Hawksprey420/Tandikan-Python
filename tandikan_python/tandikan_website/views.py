@@ -15,6 +15,18 @@ def student_dashboard(request):
 def register_view(request):
     return render(request, "tandikan_website/registration/register.html")
 
+def cashier_dashboard(request):
+    return render(request, "tandikan_website/cashier/dashboard.html")
+
+def registrar_dashboard(request):
+    return render(request, "tandikan_website/registrar/dashboard.html")
+
+def college_dashboard(request):
+    return render(request, "tandikan_website/college/dashboard.html")
+
+def faculty_dashboard(request):
+    return render(request, "tandikan_website/faculty/dashboard.html")
+
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
