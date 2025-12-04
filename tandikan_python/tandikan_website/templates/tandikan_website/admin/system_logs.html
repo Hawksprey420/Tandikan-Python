@@ -1,0 +1,86 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}System Logs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-block">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="page-header-title">
+                    <h5 class="m-b-10">System Logs</h5>
+                </div>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}"><i class="ti ti-home"></i></a></li>
+                    <li class="breadcrumb-item" aria-current="page">System Logs</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Activity Log</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Model</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                <td>
+                                    {% if log.user %}
+                                        {{ log.user.username }} ({{ log.user.role }})
+                                    {% else %}
+                                        <span class="text-muted">System/Unknown</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.action == 'CREATE' %}
+                                        <span class="badge bg-success">Create</span>
+                                    {% elif log.action == 'UPDATE' %}
+                                        <span class="badge bg-warning text-dark">Update</span>
+                                    {% elif log.action == 'DELETE' %}
+                                        <span class="badge bg-danger">Delete</span>
+                                    {% elif log.action == 'LOGIN' %}
+                                        <span class="badge bg-info text-dark">Login</span>
+                                    {% elif log.action == 'LOGOUT' %}
+                                        <span class="badge bg-secondary">Logout</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">{{ log.action }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.model_name }}</td>
+                                <td>
+                                    <small>{{ log.details|truncatechars:100 }}</small>
+                                </td>
+                                <td>{{ log.ip_address|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No logs found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

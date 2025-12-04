@@ -49,6 +49,13 @@
                 </li>
 
                 <li class="pc-item">
+                    <a href="{% url 'program_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-certificate"></i></span>
+                        <span class="pc-mtext">Programs</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
                     <a href="{% url 'student_list' %}" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-user"></i></span>
                         <span class="pc-mtext">Students</span>
@@ -121,6 +128,15 @@
                 </li>
                 {% endif %}
 
+                {% if user.role == 'admin' %}
+                <li class="pc-item">
+                    <a href="{% url 'admin_logs' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-activity"></i></span>
+                        <span class="pc-mtext">System Logs</span>
+                    </a>
+                </li>
+                {% endif %}
+
                 {% if user.role == 'admin' or user.role == 'cashier' %}
                 <li class="pc-item pc-hasmenu">
                     <a href="#!" class="pc-link">
@@ -182,7 +198,7 @@
                 <li class="pc-item">
                     <a href="{% url 'schedule_list' %}" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-typography"></i></span>
-                        <span class="pc-mtext">Your subjects</span>
+                        <span class="pc-mtext">{% if user.role == 'admin' %}Class Schedules{% else %}Your subjects{% endif %}</span>
                     </a>
                 </li>
 

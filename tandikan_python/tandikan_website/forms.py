@@ -1,21 +1,27 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Faculty, AcademicTerm, College, StudentInfo, SubjectPrerequisite
+from .models import Faculty, AcademicTerm, College, StudentInfo, SubjectPrerequisite, Program
 
 User = get_user_model()
 
 class FacultyForm(forms.ModelForm):
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput)
-    email = forms.EmailField()
-    first_name = forms.CharField(max_length=150)
-    last_name = forms.CharField(max_length=150)
+    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = Faculty
         fields = ['college', 'gender', 'address', 'contact_no', 'birth_date', 'emergency_contact', 'emergency_contact_name']
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+            'college': forms.Select(attrs={'class': 'form-select'}),
+            'gender': forms.Select(attrs={'class': 'form-select'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'contact_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def save(self, commit=True):
@@ -41,11 +47,11 @@ class FacultyForm(forms.ModelForm):
         return faculty
 
 class RegistrarForm(forms.ModelForm):
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput)
-    email = forms.EmailField()
-    first_name = forms.CharField(max_length=150)
-    last_name = forms.CharField(max_length=150)
+    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
@@ -69,18 +75,35 @@ class AcademicTermForm(forms.ModelForm):
         model = AcademicTerm
         fields = ['academic_year', 'semester']
 
+class ProgramForm(forms.ModelForm):
+    class Meta:
+        model = Program
+        fields = ['program_code', 'program_name', 'college']
+        widgets = {
+            'program_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'program_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'college': forms.Select(attrs={'class': 'form-select'}),
+        }
+
 class StudentForm(forms.ModelForm):
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput)
-    email = forms.EmailField()
-    first_name = forms.CharField(max_length=150)
-    last_name = forms.CharField(max_length=150)
+    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = StudentInfo
         fields = ['college', 'program', 'year_level', 'birth_date', 'contact_no', 'emergency_contact_name', 'emergency_contact_number', 'address']
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+            'college': forms.Select(attrs={'class': 'form-select'}),
+            'program': forms.Select(attrs={'class': 'form-select'}),
+            'year_level': forms.NumberInput(attrs={'class': 'form-control'}),
+            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'contact_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def save(self, commit=True):

@@ -15,6 +15,7 @@ urlpatterns = [
     
     # Authentication URLs
     path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
     path("register/", views.register_view, name="register"),
 
     # Subject Management
@@ -28,6 +29,12 @@ urlpatterns = [
     path("colleges/create/", views.college_create, name="college_create"),
     path("colleges/update/<int:college_id>/", views.college_update, name="college_update"),
     path("colleges/delete/<int:college_id>/", views.college_delete, name="college_delete"),
+
+    # Program Management
+    path("programs/", views.program_list, name="program_list"),
+    path("programs/create/", views.program_create, name="program_create"),
+    path("programs/update/<int:program_id>/", views.program_update, name="program_update"),
+    path("programs/delete/<int:program_id>/", views.program_delete, name="program_delete"),
 
     # Faculty Management
     path("faculty/", views.faculty_list, name="faculty_list"),
@@ -69,6 +76,9 @@ urlpatterns = [
     path("school-admin/enrollments/", views.admin_enrollment_list, name="admin_enrollment_list"),
     path("school-admin/assessments/", views.admin_assessment_list, name="admin_assessment_list"),
     path("school-admin/payments/", views.admin_payment_list, name="admin_payment_list"),
+
+    # System Logs
+    path("school-admin/logs/", views.admin_logs, name="admin_logs"),
 
     # Student Management
     path("students/", views.student_list, name="student_list"),

@@ -1,4 +1,24 @@
 from ..models import SubjectPrerequisite, Enrollment, EnrollmentSubject
+import re
+
+def parse_days(day_str):
+    """
+    Parses a day string (e.g., "MWF", "TTh") into a set of day codes.
+    Supports: Su, Th, Sa, M, T, W, F, S
+    """
+    if not day_str:
+        return set()
+    # Regex to match day codes. Order matters (2-letter codes first).
+    pattern = r'(Su|Th|Sa|M|T|W|F|S)'
+    return set(re.findall(pattern, day_str))
+
+def check_day_overlap(day1, day2):
+    """
+    Checks if two day strings have any overlapping days.
+    """
+    days1 = parse_days(day1)
+    days2 = parse_days(day2)
+    return not days1.isdisjoint(days2)
 
 def validate_prerequisites(student, subject):
     """
@@ -28,7 +48,8 @@ def validate_schedule_conflicts(new_schedule, current_schedules):
     Returns (True, None) if valid, or (False, error_message).
     """
     for schedule in current_schedules:
-        if schedule.day == new_schedule.day:
+        # Check day overlap using robust parsing
+        if check_day_overlap(schedule.day, new_schedule.day):
             # Check time overlap
             # Overlap if (StartA < EndB) and (EndA > StartB)
             if new_schedule.start_time < schedule.end_time and new_schedule.end_time > schedule.start_time:
@@ -49,33 +70,35 @@ def validate_class_creation(instructor, room, day, start_time, end_time, exclude
     from django.db.models import Q
     
     # 1. Check Instructor Conflict
-    instructor_conflicts = ClassSchedule.objects.filter(
+    # We must fetch ALL schedules for this instructor that overlap in TIME, then check DAY overlap in Python.
+    # Optimization: Filter by time overlap first (database side), then check days.
+    # Note: We can't easily filter by "day overlap" in SQL with this string format.
+    
+    instructor_candidates = ClassSchedule.objects.filter(
         instructor=instructor,
-        day=day,
         start_time__lt=end_time,
         end_time__gt=start_time
     )
     
     if exclude_schedule_id:
-        instructor_conflicts = instructor_conflicts.exclude(schedule_id=exclude_schedule_id)
+        instructor_candidates = instructor_candidates.exclude(schedule_id=exclude_schedule_id)
         
-    if instructor_conflicts.exists():
-        conflict = instructor_conflicts.first()
-        return False, f"Instructor {instructor} is already booked on {day} {conflict.start_time}-{conflict.end_time} ({conflict.subject.subject_code})."
+    for conflict in instructor_candidates:
+        if check_day_overlap(day, conflict.day):
+             return False, f"Instructor {instructor} is already booked on {conflict.day} {conflict.start_time}-{conflict.end_time} ({conflict.subject.subject_code})."
 
     # 2. Check Room Conflict
-    room_conflicts = ClassSchedule.objects.filter(
+    room_candidates = ClassSchedule.objects.filter(
         room=room,
-        day=day,
         start_time__lt=end_time,
         end_time__gt=start_time
     )
     
     if exclude_schedule_id:
-        room_conflicts = room_conflicts.exclude(schedule_id=exclude_schedule_id)
+        room_candidates = room_candidates.exclude(schedule_id=exclude_schedule_id)
         
-    if room_conflicts.exists():
-        conflict = room_conflicts.first()
-        return False, f"Room {room} is already booked on {day} {conflict.start_time}-{conflict.end_time} ({conflict.subject.subject_code})."
+    for conflict in room_candidates:
+        if check_day_overlap(day, conflict.day):
+            return False, f"Room {room} is already booked on {conflict.day} {conflict.start_time}-{conflict.end_time} ({conflict.subject.subject_code})."
         
     return True, None

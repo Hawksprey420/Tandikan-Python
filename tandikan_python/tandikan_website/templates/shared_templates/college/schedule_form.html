@@ -11,45 +11,57 @@
                 <h5>Add Class Schedule</h5>
             </div>
             <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Subject</label>
-                        <select name="subject" class="form-select" required>
-                            {% for subject in subjects %}
-                            <option value="{{ subject.subject_id }}">{{ subject.subject_code }} - {{ subject.subject_name }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject</label>
+                            <select name="subject" class="form-select" required>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.subject_id }}" {% if old_data.subject|add:"0" == subject.subject_id %}selected{% endif %}>{{ subject.subject_code }} - {{ subject.subject_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Instructor</label>
+                            <select name="instructor" class="form-select" required>
+                                {% for instructor in instructors %}
+                                <option value="{{ instructor.faculty_id }}" {% if old_data.instructor|add:"0" == instructor.faculty_id %}selected{% endif %}>{{ instructor.last_name }}, {{ instructor.first_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Instructor</label>
-                        <select name="instructor" class="form-select" required>
-                            {% for instructor in instructors %}
-                            <option value="{{ instructor.faculty_id }}">{{ instructor.last_name }}, {{ instructor.first_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Day</label>
-                        <input type="text" name="day" class="form-control" placeholder="e.g. MWF, TTh" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Room</label>
+                            <select name="room" class="form-select" required>
+                                {% for room in rooms %}
+                                <option value="{{ room.room_name }}" {% if old_data.room == room.room_name %}selected{% endif %}>{{ room.room_name }} (Cap: {{ room.capacity }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Day</label>
+                            <input type="text" name="day" class="form-control" placeholder="e.g. MWF, TTh" value="{{ old_data.day|default:'' }}" required>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Start Time</label>
-                            <input type="time" name="start_time" class="form-control" required>
+                            <input type="time" name="start_time" class="form-control" value="{{ old_data.start_time|default:'' }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">End Time</label>
-                            <input type="time" name="end_time" class="form-control" required>
+                            <input type="time" name="end_time" class="form-control" value="{{ old_data.end_time|default:'' }}" required>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Room</label>
-                        <select name="room" class="form-select" required>
-                            {% for room in rooms %}
-                            <option value="{{ room.room_name }}">{{ room.room_name }} (Cap: {{ room.capacity }})</option>
-                            {% endfor %}
-                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Save</button>
                     <a href="{% url 'schedule_list' %}" class="btn btn-secondary">Cancel</a>

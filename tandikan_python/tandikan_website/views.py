@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, EnrollmentSubject, Faculty, ReportLog, Room
-from .forms import FacultyForm, RegistrarForm, AcademicTermForm, StudentForm, SubjectPrerequisiteForm
+from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, EnrollmentSubject, Faculty, ReportLog, Room, SystemLog
+from .forms import FacultyForm, RegistrarForm, AcademicTermForm, StudentForm, SubjectPrerequisiteForm, ProgramForm
 from .services.enrollment import enroll_student
 from .services.assessment import generate_assessment
 from .services.payments import record_payment
@@ -307,6 +307,10 @@ def login_view(request):
 
     return render(request, "tandikan_website/login/login.html")
 
+def logout_view(request):
+    logout(request)
+    return redirect("landing")
+
 # --------------------------------------------------------
 # SUBJECT MANAGEMENT
 # --------------------------------------------------------
@@ -457,8 +461,17 @@ def payment_view(request):
 # --------------------------------------------------------
 
 def schedule_list(request):
-    schedules = ClassSchedule.objects.all()
     base_template = get_base_template(request.user)
+    
+    if request.user.role == 'instructor':
+        try:
+            faculty = Faculty.objects.get(user=request.user)
+            schedules = ClassSchedule.objects.filter(instructor=faculty)
+        except Faculty.DoesNotExist:
+            schedules = ClassSchedule.objects.none()
+    else:
+        schedules = ClassSchedule.objects.all()
+
     return render(request, "shared_templates/college/schedule_list.html", {'schedules': schedules, 'base_template': base_template})
 
 def schedule_create(request):
@@ -528,6 +541,78 @@ def schedule_delete(request, schedule_id):
     schedule.delete()
     messages.success(request, "Schedule deleted successfully.")
     return redirect("schedule_list")
+
+# --------------------------------------------------------
+# PROGRAM MANAGEMENT
+# --------------------------------------------------------
+
+def program_list(request):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+    
+    programs = Program.objects.all().select_related('college')
+    base_template = get_base_template(request.user)
+    
+    return render(request, "tandikan_website/admin/program_list.html", {
+        'programs': programs,
+        'base_template': base_template
+    })
+
+def program_create(request):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    base_template = get_base_template(request.user)
+    
+    if request.method == 'POST':
+        form = ProgramForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Program created successfully.")
+            return redirect('program_list')
+    else:
+        form = ProgramForm()
+        
+    return render(request, "tandikan_website/admin/program_form.html", {
+        'form': form,
+        'base_template': base_template,
+        'title': 'Create Program'
+    })
+
+def program_update(request, program_id):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    program = Program.objects.get(pk=program_id)
+    base_template = get_base_template(request.user)
+    
+    if request.method == 'POST':
+        form = ProgramForm(request.POST, instance=program)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Program updated successfully.")
+            return redirect('program_list')
+    else:
+        form = ProgramForm(instance=program)
+        
+    return render(request, "tandikan_website/admin/program_form.html", {
+        'form': form,
+        'base_template': base_template,
+        'title': 'Edit Program'
+    })
+
+def program_delete(request, program_id):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    program = Program.objects.get(pk=program_id)
+    program.delete()
+    messages.success(request, "Program deleted successfully.")
+    return redirect('program_list')
 
 # --------------------------------------------------------
 # REPORTS
@@ -726,8 +811,15 @@ def admin_assessment_list(request):
 
 def admin_payment_list(request):
     payments = Payment.objects.all().order_by('-date_paid')
-    base_template = get_base_template(request.user)
-    return render(request, "tandikan_website/admin/payment_list.html", {'payments': payments, 'base_template': base_template})
+    return render(request, "tandikan_website/admin/payment_list.html", {'payments': payments})
+
+def admin_logs(request):
+    if not request.user.is_authenticated or request.user.role != 'admin':
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    logs = SystemLog.objects.all()
+    return render(request, "tandikan_website/admin/system_logs.html", {'logs': logs})
 
 # --------------------------------------------------------
 # STUDENT MANAGEMENT
