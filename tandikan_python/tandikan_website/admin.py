@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User,
     College,
@@ -22,10 +23,17 @@ from .models import (
 # --------------------------------------------------------
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(BaseUserAdmin):
     list_display = ("username", "email", "role", "is_active", "is_staff")
     list_filter = ("role", "is_staff", "is_active")
     search_fields = ("username", "email")
+
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Role', {'fields': ('role',)}),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ('Role', {'fields': ('role',)}),
+    )
 
 
 # --------------------------------------------------------

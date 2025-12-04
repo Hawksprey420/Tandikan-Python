@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, Faculty, ReportLog
+from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, EnrollmentSubject, Faculty, ReportLog
 from .forms import FacultyForm, RegistrarForm, AcademicTermForm, StudentForm, SubjectPrerequisiteForm
 from .services.enrollment import enroll_student
 from .services.assessment import generate_assessment
@@ -13,18 +13,60 @@ import csv
 from django.http import HttpResponse
 from .mixins.role_mixins import AdminRequiredMixin, RegistrarRequiredMixin, CashierRequiredMixin, FacultyRequiredMixin, StudentRequiredMixin, AdminOrRegistrarRequiredMixin
 
+def get_base_template(user):
+    if user.role == 'registrar':
+        return 'registrar_base.html'
+    elif user.role == 'cashier':
+        return 'cashier_base.html'
+    elif user.role == 'instructor':
+        return 'faculty_base.html'
+    return 'admin_base.html'
+
 def landing_page(request):
     return render(request, "tandikan_website/landing.html")
 
 def admin_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'admin':
         return redirect("login")
-    return render(request, "tandikan_website/admin/dashboard.html")
+    
+    context = {
+        'total_students': StudentInfo.objects.count(),
+        'total_faculty': Faculty.objects.count(),
+        'total_departments': Program.objects.count(),
+        'total_colleges': College.objects.count(),
+        'pending_enrollments': Enrollment.objects.count(), # Using total enrollments for now
+    }
+    return render(request, "tandikan_website/admin/dashboard.html", context)
 
 def student_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'student':
         return redirect("login")
-    return render(request, "tandikan_website/student/dashboard.html")
+    
+    context = {}
+    try:
+        student = StudentInfo.objects.get(user=request.user)
+        # Get current term (simplified)
+        term = AcademicTerm.objects.first()
+        if term:
+            context['current_semester'] = f"{term.academic_year} - {term.get_semester_display()}"
+            enrollment = Enrollment.objects.filter(student=student, term=term).first()
+            if enrollment:
+                enrolled_subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
+                context['total_enrolled_subjects'] = enrolled_subjects.count()
+                total_units = enrolled_subjects.aggregate(Sum('schedule__subject__units'))['schedule__subject__units__sum']
+                context['total_units'] = total_units if total_units else 0
+            else:
+                context['total_enrolled_subjects'] = 0
+                context['total_units'] = 0
+        else:
+            context['current_semester'] = "No Active Term"
+            context['total_enrolled_subjects'] = 0
+            context['total_units'] = 0
+            
+    except StudentInfo.DoesNotExist:
+        pass
+        
+    return render(request, "tandikan_website/student/dashboard.html", context)
 
 def register_view(request):
     if request.method == "POST":
@@ -74,12 +116,24 @@ def register_view(request):
 def cashier_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'cashier':
         return redirect("login")
-    return render(request, "tandikan_website/cashier/dashboard.html")
+    
+    context = {
+        'total_students': StudentInfo.objects.count(),
+        'total_faculty': Faculty.objects.count(),
+    }
+    return render(request, "tandikan_website/cashier/dashboard.html", context)
 
 def registrar_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'registrar':
         return redirect("login")
-    return render(request, "tandikan_website/registrar/dashboard.html")
+    
+    context = {
+        'total_students': StudentInfo.objects.count(),
+        'total_faculty': Faculty.objects.count(),
+        'total_departments': Program.objects.count(),
+        'total_colleges': College.objects.count(),
+    }
+    return render(request, "tandikan_website/registrar/dashboard.html", context)
 
 def college_dashboard(request):
     if not request.user.is_authenticated:
@@ -126,9 +180,11 @@ def login_view(request):
 
 def subject_list(request):
     subjects = Subject.objects.all()
-    return render(request, "shared_templates/subjects/subject_list.html", {'subjects': subjects})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/subjects/subject_list.html", {'subjects': subjects, 'base_template': base_template})
 
 def subject_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         subject_code = request.POST.get("subject_code")
         subject_name = request.POST.get("subject_name")
@@ -145,10 +201,11 @@ def subject_create(request):
         )
         messages.success(request, "Subject created successfully.")
         return redirect("subject_list")
-    return render(request, "shared_templates/subjects/subject_form.html")
+    return render(request, "shared_templates/subjects/subject_form.html", {'base_template': base_template})
 
 def subject_update(request, subject_id):
     subject = Subject.objects.get(pk=subject_id)
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         subject.subject_code = request.POST.get("subject_code")
         subject.subject_name = request.POST.get("subject_name")
@@ -158,7 +215,7 @@ def subject_update(request, subject_id):
         subject.save()
         messages.success(request, "Subject updated successfully.")
         return redirect("subject_list")
-    return render(request, "shared_templates/subjects/subject_form.html", {'subject': subject})
+    return render(request, "shared_templates/subjects/subject_form.html", {'subject': subject, 'base_template': base_template})
 
 def subject_delete(request, subject_id):
     subject = Subject.objects.get(pk=subject_id)
@@ -261,9 +318,11 @@ def payment_view(request):
 
 def schedule_list(request):
     schedules = ClassSchedule.objects.all()
-    return render(request, "shared_templates/college/schedule_list.html", {'schedules': schedules})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/college/schedule_list.html", {'schedules': schedules, 'base_template': base_template})
 
 def schedule_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         subject_id = request.POST.get("subject")
         instructor_id = request.POST.get("instructor")
@@ -290,7 +349,8 @@ def schedule_create(request):
     instructors = Faculty.objects.all()
     return render(request, "shared_templates/college/schedule_form.html", {
         'subjects': subjects,
-        'instructors': instructors
+        'instructors': instructors,
+        'base_template': base_template
     })
 
 def schedule_delete(request, schedule_id):
@@ -370,24 +430,27 @@ def export_reports(request):
 
 def college_list(request):
     colleges = College.objects.all()
-    return render(request, "shared_templates/college/college_list.html", {'colleges': colleges})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/college/college_list.html", {'colleges': colleges, 'base_template': base_template})
 
 def college_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         college_name = request.POST.get("college_name")
         College.objects.create(college_name=college_name)
         messages.success(request, "College created successfully.")
         return redirect("college_list")
-    return render(request, "shared_templates/college/college_form.html")
+    return render(request, "shared_templates/college/college_form.html", {'base_template': base_template})
 
 def college_update(request, college_id):
     college = College.objects.get(pk=college_id)
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         college.college_name = request.POST.get("college_name")
         college.save()
         messages.success(request, "College updated successfully.")
         return redirect("college_list")
-    return render(request, "shared_templates/college/college_form.html", {'college': college})
+    return render(request, "shared_templates/college/college_form.html", {'college': college, 'base_template': base_template})
 
 def college_delete(request, college_id):
     college = College.objects.get(pk=college_id)
@@ -401,9 +464,11 @@ def college_delete(request, college_id):
 
 def faculty_list(request):
     faculty_members = Faculty.objects.all()
-    return render(request, "shared_templates/faculty/faculty_list.html", {'faculty_members': faculty_members})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/faculty/faculty_list.html", {'faculty_members': faculty_members, 'base_template': base_template})
 
 def faculty_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         form = FacultyForm(request.POST)
         if form.is_valid():
@@ -412,7 +477,7 @@ def faculty_create(request):
             return redirect("faculty_list")
     else:
         form = FacultyForm()
-    return render(request, "shared_templates/faculty/faculty_form.html", {'form': form})
+    return render(request, "shared_templates/faculty/faculty_form.html", {'form': form, 'base_template': base_template})
 
 def faculty_delete(request, faculty_id):
     faculty = Faculty.objects.get(pk=faculty_id)
@@ -479,7 +544,8 @@ def academic_term_delete(request, term_id):
 
 def admin_enrollment_list(request):
     enrollments = Enrollment.objects.all().order_by('-date_enrolled')
-    return render(request, "tandikan_website/admin/enrollment_list.html", {'enrollments': enrollments})
+    base_template = get_base_template(request.user)
+    return render(request, "tandikan_website/admin/enrollment_list.html", {'enrollments': enrollments, 'base_template': base_template})
 
 def admin_assessment_list(request):
     assessments = Assessment.objects.all().order_by('-date_generated')
@@ -503,9 +569,11 @@ def student_list(request):
         )
     else:
         students = StudentInfo.objects.all()
-    return render(request, "shared_templates/student/student_list.html", {'students': students})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/student/student_list.html", {'students': students, 'base_template': base_template})
 
 def student_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         form = StudentForm(request.POST)
         if form.is_valid():
@@ -514,10 +582,11 @@ def student_create(request):
             return redirect("student_list")
     else:
         form = StudentForm()
-    return render(request, "shared_templates/student/student_form.html", {'form': form})
+    return render(request, "shared_templates/student/student_form.html", {'form': form, 'base_template': base_template})
 
 def student_update(request, student_id):
     student = StudentInfo.objects.get(pk=student_id)
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         form = StudentForm(request.POST, instance=student)
         if form.is_valid():
@@ -526,7 +595,7 @@ def student_update(request, student_id):
             return redirect("student_list")
     else:
         form = StudentForm(instance=student)
-    return render(request, "shared_templates/student/student_form.html", {'form': form, 'update': True})
+    return render(request, "shared_templates/student/student_form.html", {'form': form, 'update': True, 'base_template': base_template})
 
 def student_delete(request, student_id):
     student = StudentInfo.objects.get(pk=student_id)
@@ -542,9 +611,11 @@ def student_delete(request, student_id):
 
 def prerequisite_list(request):
     prerequisites = SubjectPrerequisite.objects.all()
-    return render(request, "shared_templates/subjects/prerequisite_list.html", {'prerequisites': prerequisites})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/subjects/prerequisite_list.html", {'prerequisites': prerequisites, 'base_template': base_template})
 
 def prerequisite_create(request):
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         form = SubjectPrerequisiteForm(request.POST)
         if form.is_valid():
@@ -553,7 +624,7 @@ def prerequisite_create(request):
             return redirect("prerequisite_list")
     else:
         form = SubjectPrerequisiteForm()
-    return render(request, "shared_templates/subjects/prerequisite_form.html", {'form': form})
+    return render(request, "shared_templates/subjects/prerequisite_form.html", {'form': form, 'base_template': base_template})
 
 def prerequisite_delete(request, prereq_id):
     prereq = SubjectPrerequisite.objects.get(pk=prereq_id)
