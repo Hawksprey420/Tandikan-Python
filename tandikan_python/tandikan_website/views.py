@@ -16,6 +16,8 @@ import datetime
 import csv
 from django.http import HttpResponse
 from .mixins.role_mixins import AdminRequiredMixin, RegistrarRequiredMixin, CashierRequiredMixin, FacultyRequiredMixin, StudentRequiredMixin, AdminOrRegistrarRequiredMixin
+from xhtml2pdf import pisa
+from django.template.loader import get_template
 
 def get_base_template(user):
     if user.role == 'registrar':
@@ -121,10 +123,13 @@ def register_view(request):
         user.last_name = last_name
         user.save()
 
-        # Generate Student ID (Simple logic: Year + Random)
+        # Generate Student ID (Unique)
         year = datetime.date.today().year
-        random_str = get_random_string(length=5, allowed_chars='0123456789')
-        student_id = f"{year}-{random_str}"
+        while True:
+            random_str = get_random_string(length=5, allowed_chars='0123456789')
+            student_id = f"{year}-{random_str}"
+            if not StudentInfo.objects.filter(student_id=student_id).exists():
+                break
 
         # Create StudentInfo
         StudentInfo.objects.create(
@@ -393,8 +398,12 @@ def enrollment_view(request):
         else:
             messages.error(request, f"Enrollment failed: {result}")
 
-    # Show available schedules
-    schedules = ClassSchedule.objects.all()
+    # Show available schedules (Filtered by Program and Year Level)
+    schedules = ClassSchedule.objects.filter(
+        subject__program=student.program,
+        subject__year_level=student.year_level,
+        subject__semester=term.semester
+    )
     return render(request, "tandikan_website/student/enrollment.html", {'schedules': schedules, 'term': term})
 
 # --------------------------------------------------------
@@ -483,6 +492,7 @@ def schedule_create(request):
         start_time_str = request.POST.get("start_time")
         end_time_str = request.POST.get("end_time")
         room = request.POST.get("room")
+        section_name = request.POST.get("section_name", "")
         
         try:
             # Validate instructor mapping
@@ -517,7 +527,8 @@ def schedule_create(request):
                 day=day,
                 start_time=start_time,
                 end_time=end_time,
-                room=room
+                room=room,
+                section_name=section_name
             )
             messages.success(request, "Schedule created successfully.")
             return redirect("schedule_list")
@@ -658,24 +669,44 @@ def export_reports(request):
         messages.error(request, "Access denied.")
         return redirect("login")
         
+    report_format = request.GET.get('format', 'csv')
+
+    # Data Gathering
+    enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
+    semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
+    collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+
+    if report_format == 'pdf':
+        template_path = 'tandikan_website/reports/pdf_report.html'
+        context = {
+            'enrollment_stats': enrollment_stats,
+            'semester_stats': semester_stats,
+            'collection_stats': collection_stats,
+            'generated_by': request.user,
+            'date_generated': datetime.datetime.now()
+        }
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="enrollment_report.pdf"'
+        template = get_template(template_path)
+        html = template.render(context)
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+
+    # CSV Export (Default)
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="enrollment_report.csv"'
     
     writer = csv.writer(response)
     writer.writerow(['Report Type', 'Category', 'Count/Amount'])
     
-    # 1. Enrolled students per course and year level
-    enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
     for stat in enrollment_stats:
         writer.writerow(['Enrollment per Course/Year', f"{stat['student__program__program_code']} - Year {stat['student__year_level']}", stat['count']])
         
-    # 2. Total enrollment per semester
-    semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
     for stat in semester_stats:
         writer.writerow(['Enrollment per Semester', f"{stat['term__academic_year']} - {stat['term__semester']}", stat['count']])
         
-    # 3. Collection report
-    collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
     for stat in collection_stats:
         writer.writerow(['Collection', str(stat['date_paid__date']), stat['total']])
         
@@ -775,10 +806,20 @@ def registrar_delete(request, user_id):
 # --------------------------------------------------------
 
 def academic_term_list(request):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
     terms = AcademicTerm.objects.all().order_by('-academic_year', '-semester')
-    return render(request, "shared_templates/academic_term/term_list.html", {'terms': terms})
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/academic_term/term_list.html", {'terms': terms, 'base_template': base_template})
 
 def academic_term_create(request):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    base_template = get_base_template(request.user)
     if request.method == "POST":
         form = AcademicTermForm(request.POST)
         if form.is_valid():
@@ -787,9 +828,13 @@ def academic_term_create(request):
             return redirect("academic_term_list")
     else:
         form = AcademicTermForm()
-    return render(request, "shared_templates/academic_term/term_form.html", {'form': form})
+    return render(request, "shared_templates/academic_term/term_form.html", {'form': form, 'base_template': base_template})
 
 def academic_term_delete(request, term_id):
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
     term = AcademicTerm.objects.get(pk=term_id)
     term.delete()
     messages.success(request, "Academic Term deleted successfully.")

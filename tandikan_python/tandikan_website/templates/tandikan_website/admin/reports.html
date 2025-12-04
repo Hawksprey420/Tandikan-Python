@@ -8,9 +8,14 @@
     <div class="col-md-12 mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h3>System Reports</h3>
-            <a href="{% url 'export_reports' %}" class="btn btn-success">
-                <i class="ti ti-file-export"></i> Export to CSV
-            </a>
+            <div>
+                <a href="{% url 'export_reports' %}?format=pdf" class="btn btn-danger me-2">
+                    <i class="ti ti-file-type-pdf"></i> Export to PDF
+                </a>
+                <a href="{% url 'export_reports' %}" class="btn btn-success">
+                    <i class="ti ti-file-export"></i> Export to CSV
+                </a>
+            </div>
         </div>
     </div>
 </div>

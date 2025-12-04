@@ -156,6 +156,7 @@ class ClassSchedule(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     room = models.CharField(max_length=50)
+    section_name = models.CharField(max_length=50, blank=True, help_text="e.g. Block A")
 
     class Meta:
         constraints = [

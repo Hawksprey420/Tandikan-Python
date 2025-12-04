@@ -118,12 +118,16 @@ class StudentForm(forms.ModelForm):
         user.role = 'student'
         user.save()
 
-        # Generate Student ID (Simple logic: Year + Random)
+        # Generate Student ID (Unique)
         import datetime
         from django.utils.crypto import get_random_string
         year = datetime.date.today().year
-        random_str = get_random_string(length=5, allowed_chars='0123456789')
-        student_id = f"{year}-{random_str}"
+        
+        while True:
+            random_str = get_random_string(length=5, allowed_chars='0123456789')
+            student_id = f"{year}-{random_str}"
+            if not StudentInfo.objects.filter(student_id=student_id).exists():
+                break
 
         student = super().save(commit=False)
         student.student_id = student_id

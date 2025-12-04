@@ -56,6 +56,13 @@
                 </li>
 
                 <li class="pc-item">
+                    <a href="{% url 'room_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-building-arch"></i></span>
+                        <span class="pc-mtext">Rooms</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
                     <a href="{% url 'student_list' %}" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-user"></i></span>
                         <span class="pc-mtext">Students</span>
@@ -111,7 +118,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if user.role == 'admin' %}
+                {% if user.role == 'admin' or user.role == 'registrar' %}
                 <li class="pc-item">
                     <a href="{% url 'academic_term_list' %}" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-calendar-event"></i></span>
@@ -125,6 +132,15 @@
                 <li class="pc-item pc-caption">
                     <label>Records & Reports</label>
                     <i class="ti ti-file-analytics"></i>
+                </li>
+                {% endif %}
+
+                {% if user.role == 'admin' or user.role == 'registrar' %}
+                <li class="pc-item">
+                    <a href="{% url 'reports' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
+                        <span class="pc-mtext">Reports</span>
+                    </a>
                 </li>
                 {% endif %}
 
