@@ -73,6 +73,92 @@
 
 </div>
 
+<div class="row">
+    <!-- Chart Section -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Enrollments per Program</h5>
+            </div>
+            <div class="card-body">
+                <div id="enrollment-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Enrollments -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Enrollments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Term</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enrollment in recent_enrollments %}
+                            <tr>
+                                <td>
+                                    <h6 class="mb-0">{{ enrollment.student.last_name }}</h6>
+                                    <small class="text-muted">{{ enrollment.date_enrolled|date:"M d, H:i" }}</small>
+                                </td>
+                                <td>{{ enrollment.term }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center">No recent enrollments.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var options = {
+            series: [{
+                name: 'Enrollments',
+                data: {{ chart_data|safe }}
+            }],
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            xaxis: {
+                categories: {{ chart_labels|safe }},
+            },
+            colors: ['#673ab7'],
+        };
+
+        var chart = new ApexCharts(document.querySelector("#enrollment-chart"), options);
+        chart.render();
+    });
+</script>
+
 <!-- Quick Actions -->
 <div class="row">
   <div class="col-md-12">
@@ -97,8 +183,8 @@
                     <i class="ti ti-book me-2"></i> Manage Subjects
                 </a>
             </div>
-             <div class="col-md-3 mb-3">
-                <a href="{% url 'enrollment' %}" class="btn btn-warning w-100">
+            <div class="col-md-3 mb-3">
+                <a href="{% url 'student_list' %}" class="btn btn-info w-100">
                     <i class="ti ti-clipboard-list me-2"></i> Enrollment
                 </a>
             </div>

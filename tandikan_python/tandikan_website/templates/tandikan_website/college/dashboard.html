@@ -20,6 +20,41 @@
   </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <a href="{% url 'schedule_list' %}" class="btn btn-warning w-100">
+                    <i class="ti ti-calendar me-2"></i> Class Schedules
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="{% url 'subject_list' %}" class="btn btn-success w-100">
+                    <i class="ti ti-book me-2"></i> Manage Subjects
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="{% url 'room_list' %}" class="btn btn-info w-100">
+                    <i class="ti ti-building me-2"></i> Manage Rooms
+                </a>
+            </div>
+             <div class="col-md-3 mb-3">
+                <a href="{% url 'faculty_list' %}" class="btn btn-secondary w-100">
+                    <i class="ti ti-school me-2"></i> Manage Faculty
+                </a>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main dashboard metrics -->
 <div class="row">
 

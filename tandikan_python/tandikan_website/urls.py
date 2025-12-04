@@ -51,6 +51,11 @@ urlpatterns = [
     path("schedules/create/", views.schedule_create, name="schedule_create"),
     path("schedules/delete/<int:schedule_id>/", views.schedule_delete, name="schedule_delete"),
 
+    # Room Management
+    path("rooms/", views.room_list, name="room_list"),
+    path("rooms/create/", views.room_create, name="room_create"),
+    path("rooms/delete/<int:room_id>/", views.room_delete, name="room_delete"),
+
     # Reports
     path("reports/", views.reports_view, name="reports"),
     path("reports/export/", views.export_reports, name="export_reports"),

@@ -251,3 +251,17 @@ class ReportLog(models.Model):
 
     def __str__(self):
         return self.report_name
+
+
+# --------------------------------------------------------
+# ROOM MANAGEMENT
+# --------------------------------------------------------
+
+class Room(models.Model):
+    room_id = models.AutoField(primary_key=True)
+    room_name = models.CharField(max_length=50, unique=True)
+    capacity = models.PositiveIntegerField(default=30)
+    building = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.room_name

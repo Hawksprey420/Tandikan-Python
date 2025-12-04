@@ -1,0 +1,234 @@
+{% load static %}
+<nav class="pc-sidebar">
+    <div class="navbar-wrapper">
+        <div class="m-header">
+            <a href="#" class="b-brand text-primary">
+                <img src="{% static 'src/assets/images/logo-dark.svg' %}" class="img-fluid logo-lg" alt="logo">
+            </a>
+        </div>
+        <div class="navbar-content">
+            <ul class="pc-navbar">
+                
+                <!-- Dashboard -->
+                <li class="pc-item">
+                    {% if user.role == 'admin' %}
+                        <a href="{% url 'admin_dashboard' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
+                    {% elif user.role == 'registrar' %}
+                        <a href="{% url 'registrar_dashboard' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
+                    {% elif user.role == 'cashier' %}
+                        <a href="{% url 'cashier_dashboard' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
+                    {% elif user.role == 'instructor' %}
+                        <a href="{% url 'faculty_dashboard' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
+                    {% endif %}
+                </li>
+
+                <!-- Management Section (Admin & Registrar) -->
+                {% if user.role == 'admin' or user.role == 'registrar' %}
+                <li class="pc-item pc-caption">
+                    <label>Management</label>
+                    <i class="ti ti-dashboard"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'college_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-building-arch"></i></span>
+                        <span class="pc-mtext">Colleges</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'student_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-user"></i></span>
+                        <span class="pc-mtext">Students</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'faculty_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-users"></i></span>
+                        <span class="pc-mtext">Faculty</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Admin Only -->
+                {% if user.role == 'admin' %}
+                <li class="pc-item">
+                    <a href="{% url 'registrar_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-user-check"></i></span>
+                        <span class="pc-mtext">Registrar</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Academic Section -->
+                {% if user.role == 'admin' or user.role == 'registrar' %}
+                <li class="pc-item pc-hasmenu">
+                    <a href="#!" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-book"></i></span>
+                        <span class="pc-mtext">Subjects</span>
+                        <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
+                    </a>
+                    <ul class="pc-submenu">
+                        <li class="pc-item"><a class="pc-link" href="{% url 'subject_list' %}">Subject List</a></li>
+                        <li class="pc-item"><a class="pc-link" href="{% url 'prerequisite_list' %}">Prerequisites</a></li>
+                    </ul>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'schedule_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-calendar"></i></span>
+                        <span class="pc-mtext">Class Schedules</span>
+                    </a>
+                </li>
+
+                {% if user.role == 'registrar' %}
+                <li class="pc-item">
+                    <a href="{% url 'student_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-clipboard-list"></i></span>
+                        <span class="pc-mtext">Enrollment</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                {% if user.role == 'admin' %}
+                <li class="pc-item">
+                    <a href="{% url 'academic_term_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-calendar-event"></i></span>
+                        <span class="pc-mtext">Academic Terms</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Logs & Reports -->
+                {% if user.role == 'admin' or user.role == 'registrar' or user.role == 'cashier' %}
+                <li class="pc-item pc-caption">
+                    <label>Records & Reports</label>
+                    <i class="ti ti-file-analytics"></i>
+                </li>
+                {% endif %}
+
+                {% if user.role == 'admin' or user.role == 'cashier' %}
+                <li class="pc-item pc-hasmenu">
+                    <a href="#!" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-settings"></i></span>
+                        <span class="pc-mtext">Transaction Logs</span>
+                        <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
+                    </a>
+                    <ul class="pc-submenu">
+                        <li class="pc-item"><a class="pc-link" href="{% url 'admin_enrollment_list' %}">Enrollments</a></li>
+                        <li class="pc-item"><a class="pc-link" href="{% url 'admin_assessment_list' %}">Assessments</a></li>
+                        <li class="pc-item"><a class="pc-link" href="{% url 'admin_payment_list' %}">Payments</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+
+                <!-- Cashier Section -->
+                {% if user.role == 'cashier' or user.role == 'admin' %}
+                <li class="pc-item pc-caption">
+                    <label>Cashier Services</label>
+                    <i class="ti ti-dashboard"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'payment' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-cash"></i></span>
+                        <span class="pc-mtext">Record Payment</span>
+                    </a>
+                </li>
+                
+                <li class="pc-item">
+                    <a href="{% url 'admin_assessment_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-list-check"></i></span>
+                        <span class="pc-mtext">Assessments</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'reports' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
+                        <span class="pc-mtext">Reports</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="#" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-lock"></i></span>
+                        <span class="pc-mtext">Add staff (supervisor only)</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Faculty Section -->
+                {% if user.role == 'instructor' %}
+                <li class="pc-item pc-caption">
+                    <label>List functions</label>
+                    <i class="ti ti-dashboard"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'schedule_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-typography"></i></span>
+                        <span class="pc-mtext">Your subjects</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'faculty_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-users"></i></span>
+                        <span class="pc-mtext">Faculty management</span>
+                    </a>
+                </li>
+
+
+                <li class="pc-item">
+                    <a href="{% url 'room_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-building"></i></span>
+                        <span class="pc-mtext">Rooms</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'reports' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
+                        <span class="pc-mtext">System logs</span>
+                    </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label>Tandikan functions:</label>
+                    <i class="ti ti-news"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'student_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
+                        <span class="pc-mtext">Enroll student on subjects</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'subject_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-book"></i></span>
+                        <span class="pc-mtext">View/modify subjects</span>
+                    </a>
+                </li>
+                {% endif %}
+
+            </ul>
+        </div>
+    </div>
+</nav>

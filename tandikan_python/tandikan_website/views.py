@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, EnrollmentSubject, Faculty, ReportLog
+from .models import User, StudentInfo, College, Program, Subject, SubjectPrerequisite, ClassSchedule, AcademicTerm, Assessment, Payment, Enrollment, EnrollmentSubject, Faculty, ReportLog, Room
 from .forms import FacultyForm, RegistrarForm, AcademicTermForm, StudentForm, SubjectPrerequisiteForm
 from .services.enrollment import enroll_student
 from .services.assessment import generate_assessment
 from .services.payments import record_payment
+from .services.schedule_subject_validation import validate_prerequisites, validate_schedule_conflicts, validate_class_creation
 from django.utils.crypto import get_random_string
-from django.db.models import Count, Sum, Q
+from django.db import models
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import TruncDate
+from datetime import timedelta
 import datetime
 import csv
 from django.http import HttpResponse
@@ -29,12 +33,39 @@ def admin_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'admin':
         return redirect("login")
     
+    # Recent Users
+    recent_users = User.objects.all().order_by('-date_joined')[:5]
+    
+    # Chart Data: Users by Role
+    users_by_role = User.objects.values('role')\
+        .annotate(count=models.Count('id'))\
+        .order_by('-count')
+        
+    chart_labels = [entry['role'].capitalize() for entry in users_by_role]
+    chart_data = [entry['count'] for entry in users_by_role]
+
+    # Chart Data: Enrollments per Program (Enrollment Statistics)
+    enrollments_per_program = Enrollment.objects.values('student__program__program_code')\
+        .annotate(count=models.Count('enrollment_id'))\
+        .order_by('-count')
+    enrollment_labels = [entry['student__program__program_code'] for entry in enrollments_per_program]
+    enrollment_data = [entry['count'] for entry in enrollments_per_program]
+
+    # Recent Activity (Report Logs)
+    recent_activity = ReportLog.objects.all().order_by('-timestamp')[:5]
+    
     context = {
         'total_students': StudentInfo.objects.count(),
         'total_faculty': Faculty.objects.count(),
         'total_departments': Program.objects.count(),
         'total_colleges': College.objects.count(),
-        'pending_enrollments': Enrollment.objects.count(), # Using total enrollments for now
+        'pending_enrollments': Enrollment.objects.filter(is_validated=False).count(),
+        'recent_users': recent_users,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'enrollment_labels': enrollment_labels,
+        'enrollment_data': enrollment_data,
+        'recent_activity': recent_activity,
     }
     return render(request, "tandikan_website/admin/dashboard.html", context)
 
@@ -46,7 +77,7 @@ def student_dashboard(request):
     try:
         student = StudentInfo.objects.get(user=request.user)
         # Get current term (simplified)
-        term = AcademicTerm.objects.first()
+        term = AcademicTerm.objects.order_by('-term_id').first()
         if term:
             context['current_semester'] = f"{term.academic_year} - {term.get_semester_display()}"
             enrollment = Enrollment.objects.filter(student=student, term=term).first()
@@ -118,9 +149,48 @@ def cashier_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'cashier':
         return redirect("login")
     
+    # Calculate totals
+    total_collections = Payment.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    today_collections = Payment.objects.filter(date_paid__date=datetime.date.today()).aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    
+    # Recent transactions
+    recent_payments = Payment.objects.all().order_by('-date_paid')[:5]
+    
+    # Chart Data: Last 7 days collections
+    last_7_days = datetime.date.today() - timedelta(days=6)
+    daily_collections = Payment.objects.filter(date_paid__date__gte=last_7_days)\
+        .annotate(date=TruncDate('date_paid'))\
+        .values('date')\
+        .annotate(total=Sum('amount_paid'))\
+        .order_by('date')
+        
+    # Format for Chart.js
+    chart_labels = []
+    chart_data = []
+    
+    # Fill in missing days with 0
+    current_date = last_7_days
+    while current_date <= datetime.date.today():
+        found = False
+        for entry in daily_collections:
+            if entry['date'] == current_date:
+                chart_labels.append(current_date.strftime('%b %d'))
+                chart_data.append(float(entry['total']))
+                found = True
+                break
+        if not found:
+            chart_labels.append(current_date.strftime('%b %d'))
+            chart_data.append(0)
+        current_date += timedelta(days=1)
+    
     context = {
         'total_students': StudentInfo.objects.count(),
         'total_faculty': Faculty.objects.count(),
+        'total_collections': total_collections,
+        'today_collections': today_collections,
+        'recent_payments': recent_payments,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
     }
     return render(request, "tandikan_website/cashier/dashboard.html", context)
 
@@ -128,11 +198,25 @@ def registrar_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'registrar':
         return redirect("login")
     
+    # Recent Enrollments
+    recent_enrollments = Enrollment.objects.all().order_by('-date_enrolled')[:5]
+    
+    # Chart Data: Enrollments per Program
+    enrollments_per_program = Enrollment.objects.values('student__program__program_code')\
+        .annotate(count=models.Count('enrollment_id'))\
+        .order_by('-count')
+        
+    chart_labels = [entry['student__program__program_code'] for entry in enrollments_per_program]
+    chart_data = [entry['count'] for entry in enrollments_per_program]
+    
     context = {
         'total_students': StudentInfo.objects.count(),
         'total_faculty': Faculty.objects.count(),
         'total_departments': Program.objects.count(),
         'total_colleges': College.objects.count(),
+        'recent_enrollments': recent_enrollments,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
     }
     return render(request, "tandikan_website/registrar/dashboard.html", context)
 
@@ -144,12 +228,60 @@ def college_dashboard(request):
 def faculty_dashboard(request):
     if not request.user.is_authenticated or request.user.role != 'instructor':
         return redirect("login")
-    return render(request, "tandikan_website/faculty/dashboard.html")
+    
+    try:
+        faculty = Faculty.objects.get(user=request.user)
+        
+        # Get schedules assigned to this faculty
+        schedules = ClassSchedule.objects.filter(instructor=faculty)
+        total_subjects = schedules.count()
+        
+        # Get total students enrolled in these schedules
+        # We need to count distinct students across all schedules
+        enrolled_students = EnrollmentSubject.objects.filter(schedule__in=schedules).values('enrollment__student').distinct()
+        total_students = enrolled_students.count()
+        
+        # Chart Data: Students per Subject
+        students_per_subject = EnrollmentSubject.objects.filter(schedule__in=schedules)\
+            .values('schedule__subject__subject_code')\
+            .annotate(count=models.Count('enrollment__student'))\
+            .order_by('-count')
+            
+        chart_labels = [entry['schedule__subject__subject_code'] for entry in students_per_subject]
+        chart_data = [entry['count'] for entry in students_per_subject]
+        
+        # Recent Activity (e.g., recent enrollments in their classes)
+        recent_enrollments = EnrollmentSubject.objects.filter(schedule__in=schedules)\
+            .order_by('-enrollment__date_enrolled')[:5]
+            
+    except Faculty.DoesNotExist:
+        total_subjects = 0
+        total_students = 0
+        chart_labels = []
+        chart_data = []
+        recent_enrollments = []
+
+    context = {
+        'total_subjects': total_subjects,
+        'total_students': total_students,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'recent_enrollments': recent_enrollments,
+    }
+    return render(request, "tandikan_website/faculty/dashboard.html", context)
 
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
+
+        # Allow login by email
+        if '@' in username:
+            try:
+                user_obj = User.objects.get(email=username)
+                username = user_obj.username
+            except User.DoesNotExist:
+                pass # Let authenticate fail naturally
 
         user = authenticate(request, username=username, password=password)
 
@@ -296,7 +428,7 @@ def assessment_view(request):
 
 def payment_view(request):
     # For cashier to record payment
-    if not request.user.is_authenticated or request.user.role != 'cashier':
+    if not request.user.is_authenticated or request.user.role not in ['cashier', 'admin']:
         messages.error(request, "Access denied.")
         return redirect("login")
         
@@ -311,7 +443,14 @@ def payment_view(request):
         else:
             messages.error(request, f"Payment failed: {result}")
             
-    return render(request, "tandikan_website/cashier/payment.html")
+    # Pre-fill assessment_id if provided in GET
+    initial_assessment_id = request.GET.get('assessment_id', '')
+            
+    base_template = get_base_template(request.user)
+    return render(request, "tandikan_website/cashier/payment.html", {
+        'base_template': base_template,
+        'initial_assessment_id': initial_assessment_id
+    })
 
 # --------------------------------------------------------
 # CLASS SCHEDULING
@@ -328,11 +467,37 @@ def schedule_create(request):
         subject_id = request.POST.get("subject")
         instructor_id = request.POST.get("instructor")
         day = request.POST.get("day")
-        start_time = request.POST.get("start_time")
-        end_time = request.POST.get("end_time")
+        start_time_str = request.POST.get("start_time")
+        end_time_str = request.POST.get("end_time")
         room = request.POST.get("room")
         
         try:
+            # Validate instructor mapping
+            subject = Subject.objects.get(pk=subject_id)
+            instructor = Faculty.objects.get(pk=instructor_id)
+            
+            # Parse times
+            start_time = datetime.datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.datetime.strptime(end_time_str, '%H:%M').time()
+
+            if subject.college and instructor.college and subject.college != instructor.college:
+                messages.warning(request, f"Note: Instructor {instructor} ({instructor.college}) is assigned to a subject under {subject.college}.")
+
+            # Validate Conflicts
+            is_valid, error_msg = validate_class_creation(instructor, room, day, start_time, end_time)
+            if not is_valid:
+                messages.error(request, error_msg)
+                subjects = Subject.objects.all()
+                instructors = Faculty.objects.all()
+                rooms = Room.objects.all()
+                return render(request, "shared_templates/college/schedule_form.html", {
+                    'subjects': subjects,
+                    'instructors': instructors,
+                    'rooms': rooms,
+                    'base_template': base_template,
+                    'old_data': request.POST
+                })
+
             ClassSchedule.objects.create(
                 subject_id=subject_id,
                 instructor_id=instructor_id,
@@ -343,14 +508,18 @@ def schedule_create(request):
             )
             messages.success(request, "Schedule created successfully.")
             return redirect("schedule_list")
+        except ValueError:
+             messages.error(request, "Invalid time format.")
         except Exception as e:
             messages.error(request, f"Error creating schedule: {e}")
             
     subjects = Subject.objects.all()
     instructors = Faculty.objects.all()
+    rooms = Room.objects.all()
     return render(request, "shared_templates/college/schedule_form.html", {
         'subjects': subjects,
         'instructors': instructors,
+        'rooms': rooms,
         'base_template': base_template
     })
 
@@ -365,7 +534,7 @@ def schedule_delete(request, schedule_id):
 # --------------------------------------------------------
 
 def reports_view(request):
-    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar', 'cashier']:
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar', 'cashier', 'instructor']:
         messages.error(request, "Access denied.")
         return redirect("login")
 
@@ -389,6 +558,8 @@ def reports_view(request):
         base_template = "cashier_base.html"
     elif request.user.role == "registrar":
         base_template = "registrar_base.html"
+    elif request.user.role == "instructor":
+        base_template = "faculty_base.html"
 
     return render(request, "tandikan_website/admin/reports.html", {
         'enrollment_stats': enrollment_stats,
@@ -550,11 +721,13 @@ def admin_enrollment_list(request):
 
 def admin_assessment_list(request):
     assessments = Assessment.objects.all().order_by('-date_generated')
-    return render(request, "tandikan_website/admin/assessment_list.html", {'assessments': assessments})
+    base_template = get_base_template(request.user)
+    return render(request, "tandikan_website/admin/assessment_list.html", {'assessments': assessments, 'base_template': base_template})
 
 def admin_payment_list(request):
     payments = Payment.objects.all().order_by('-date_paid')
-    return render(request, "tandikan_website/admin/payment_list.html", {'payments': payments})
+    base_template = get_base_template(request.user)
+    return render(request, "tandikan_website/admin/payment_list.html", {'payments': payments, 'base_template': base_template})
 
 # --------------------------------------------------------
 # STUDENT MANAGEMENT
@@ -644,7 +817,7 @@ def staff_enroll_student(request, student_id):
         return redirect("login")
 
     student = StudentInfo.objects.get(pk=student_id)
-    term = AcademicTerm.objects.first() # Simplified: get active term
+    term = AcademicTerm.objects.order_by('-term_id').first() # Get latest term
 
     if not term:
         messages.error(request, "No active academic term.")
@@ -680,7 +853,7 @@ def staff_enroll_student(request, student_id):
 
 def validate_enrollment(request, enrollment_id):
     # Cashier validates enrollment after payment
-    if not request.user.is_authenticated or request.user.role != 'cashier':
+    if not request.user.is_authenticated or request.user.role not in ['cashier', 'admin']:
         messages.error(request, "Access denied.")
         return redirect("login")
         
@@ -693,7 +866,15 @@ def validate_enrollment(request, enrollment_id):
 
 def print_cor(request, enrollment_id):
     # Certificate of Registration
+    if not request.user.is_authenticated:
+        return redirect("login")
+
     enrollment = Enrollment.objects.get(pk=enrollment_id)
+    
+    # Permission check
+    if request.user.role == 'student' and enrollment.student.user != request.user:
+        messages.error(request, "Access denied. You can only view your own COR.")
+        return redirect("student_dashboard")
     
     if not enrollment.is_validated:
         messages.warning(request, "This enrollment is not yet validated.")
@@ -701,8 +882,41 @@ def print_cor(request, enrollment_id):
     subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
     assessment = Assessment.objects.filter(enrollment=enrollment).first()
     
+    base_template = get_base_template(request.user)
     return render(request, "tandikan_website/student/cor.html", {
         'enrollment': enrollment,
         'subjects': subjects,
-        'assessment': assessment
+        'assessment': assessment,
+        'base_template': base_template
     })
+
+# --------------------------------------------------------
+# ROOM MANAGEMENT
+# --------------------------------------------------------
+
+def room_list(request):
+    rooms = Room.objects.all()
+    base_template = get_base_template(request.user)
+    return render(request, "shared_templates/college/room_list.html", {'rooms': rooms, 'base_template': base_template})
+
+def room_create(request):
+    base_template = get_base_template(request.user)
+    if request.method == "POST":
+        room_name = request.POST.get("room_name")
+        capacity = request.POST.get("capacity")
+        building = request.POST.get("building")
+        
+        try:
+            Room.objects.create(room_name=room_name, capacity=capacity, building=building)
+            messages.success(request, "Room created successfully.")
+            return redirect("room_list")
+        except Exception as e:
+            messages.error(request, f"Error creating room: {e}")
+            
+    return render(request, "shared_templates/college/room_form.html", {'base_template': base_template})
+
+def room_delete(request, room_id):
+    room = Room.objects.get(pk=room_id)
+    room.delete()
+    messages.success(request, "Room deleted successfully.")
+    return redirect("room_list")

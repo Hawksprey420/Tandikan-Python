@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %}
+{% extends base_template|default:"admin_base.html" %}
 {% load static %}
 
 {% block title %}Assessment List{% endblock %}
@@ -15,19 +15,37 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Student</th>
                                 <th>Term</th>
                                 <th>Total Amount</th>
                                 <th>Date Generated</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for assessment in assessments %}
                             <tr>
+                                <td>{{ assessment.pk }}</td>
                                 <td>{{ assessment.enrollment.student.last_name }}, {{ assessment.enrollment.student.first_name }}</td>
                                 <td>{{ assessment.enrollment.term }}</td>
                                 <td>{{ assessment.total_amount }}</td>
                                 <td>{{ assessment.date_generated }}</td>
+                                <td>
+                                    <a href="{% url 'payment' %}?assessment_id={{ assessment.pk }}" class="btn btn-sm btn-primary" title="Record Payment">
+                                        <i class="ti ti-cash"></i> Pay
+                                    </a>
+                                    {% if not assessment.enrollment.is_validated %}
+                                    <a href="{% url 'validate_enrollment' assessment.enrollment.pk %}" class="btn btn-sm btn-success" title="Validate Enrollment">
+                                        <i class="ti ti-check"></i> Validate
+                                    </a>
+                                    {% else %}
+                                    <span class="badge bg-success">Validated</span>
+                                    {% endif %}
+                                    <a href="{% url 'print_cor' assessment.enrollment.pk %}" class="btn btn-sm btn-secondary" title="Print COR" target="_blank">
+                                        <i class="ti ti-printer"></i> COR
+                                    </a>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>

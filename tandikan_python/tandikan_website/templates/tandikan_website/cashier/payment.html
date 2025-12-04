@@ -1,4 +1,4 @@
-{% extends "cashier_base.html" %}
+{% extends base_template|default:"cashier_base.html" %}
 {% load static %}
 
 {% block title %}Record Payment{% endblock %}
@@ -21,7 +21,7 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label">Assessment ID</label>
-                        <input type="number" name="assessment_id" class="form-control" placeholder="Enter Assessment ID" required>
+                        <input type="number" name="assessment_id" class="form-control" placeholder="Enter Assessment ID" value="{{ initial_assessment_id }}" required>
                         <small class="text-muted">You can find this on the student's assessment form.</small>
                     </div>
                     <div class="mb-3">

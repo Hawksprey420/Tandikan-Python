@@ -45,7 +45,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Room</label>
-                        <input type="text" name="room" class="form-control" required>
+                        <select name="room" class="form-select" required>
+                            {% for room in rooms %}
+                            <option value="{{ room.room_name }}">{{ room.room_name }} (Cap: {{ room.capacity }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Save</button>
                     <a href="{% url 'schedule_list' %}" class="btn btn-secondary">Cancel</a>

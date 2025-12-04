@@ -1,5 +1,6 @@
 from ..models import Enrollment, EnrollmentSubject, ClassSchedule, AcademicTerm
 from .schedule_subject_validation import validate_prerequisites, validate_schedule_conflicts
+from .assessment import generate_assessment
 from django.db import transaction
 
 def enroll_student(student, term_id, schedule_ids):
@@ -36,6 +37,9 @@ def enroll_student(student, term_id, schedule_ids):
                     enrollment=enrollment,
                     schedule=schedule
                 )
+            
+            # Generate assessment immediately after enrollment
+            generate_assessment(enrollment)
                 
             return True, enrollment
             

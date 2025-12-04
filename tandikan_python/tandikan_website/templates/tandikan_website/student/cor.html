@@ -1,9 +1,24 @@
-{% extends "base.html" %}
+{% extends base_template|default:"student_base.html" %}
 {% load static %}
 
 {% block title %}Certificate of Registration{% endblock %}
 
 {% block content %}
+<style>
+    @media print {
+        .pc-sidebar, .pc-header, .page-header, .d-print-none {
+            display: none !important;
+        }
+        .pc-container {
+            margin-left: 0 !important;
+            top: 0 !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
 <div class="container mt-5">
     <div class="card">
         <div class="card-header text-center">
@@ -77,7 +92,17 @@
         </div>
         <div class="card-footer text-center d-print-none">
             <button onclick="window.print()" class="btn btn-primary">Print COR</button>
-            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% if user.role == 'admin' %}
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% elif user.role == 'registrar' %}
+                <a href="{% url 'registrar_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% elif user.role == 'cashier' %}
+                <a href="{% url 'cashier_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% elif user.role == 'instructor' %}
+                <a href="{% url 'faculty_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% else %}
+                <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            {% endif %}
         </div>
     </div>
 </div>

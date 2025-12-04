@@ -31,58 +31,8 @@
         <div class="loader-track"><div class="loader-fill"></div></div>
     </div>
 
-    <!-- Sidebar (inlined - no partials) -->
-    <nav class="pc-sidebar">
-        <div class="navbar-wrapper">
-            <div class="m-header">
-                <a href="#" class="b-brand text-primary">
-                    <img src="{% static 'src/assets/images/logo-dark.svg' %}" class="img-fluid logo-lg" alt="logo">
-                </a>
-            </div>
-            <div class="navbar-content">
-                <ul class="pc-navbar">
-                    <li class="pc-item">
-                        <a href="{% url 'cashier_dashboard' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
-                            <span class="pc-mtext">Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item pc-caption">
-                        <label>Cashier Services</label>
-                        <i class="ti ti-dashboard"></i>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'payment' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-cash"></i></span>
-                            <span class="pc-mtext">Record Payment</span>
-                        </a>
-                    </li>
-                    
-                    <li class="pc-item">
-                        <a href="{% url 'reports' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
-                            <span class="pc-mtext">Reports</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-lock"></i></span>
-                            <span class="pc-mtext">Add staff (supervisor only)</span>
-                        </a>
-                    </li>
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-brand-chrome"></i></span>
-                            <span class="pc-mtext">Easter egg for CSD faculty</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Sidebar -->
+    {% include 'includes/sidebar.html' %}
 
     <!-- Header (inlined - no partials) -->
     <header class="pc-header">
@@ -191,7 +141,7 @@
                     <li class="dropdown pc-h-item header-user-profile">
                         <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" data-bs-auto-close="outside" aria-expanded="false">
                             <img src="{% static 'src/assets/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar">
-                            <span>Stebin Ben</span>
+                            <span>{{ user.first_name }} {{ user.last_name|default:user.username }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
                             <div class="dropdown-header">
@@ -200,8 +150,8 @@
                                         <img src="{% static 'src/assets/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar wid-35">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-1">Stebin Ben</h6>
-                                        <span>UI/UX Designer</span>
+                                        <h6 class="mb-1">{{ user.first_name }} {{ user.last_name|default:user.username }}</h6>
+                                        <span>{{ user.role|title }}</span>
                                     </div>
                                     <a href="#" class="pc-head-link bg-transparent"><i class="ti ti-power text-danger"></i></a>
                                 </div>

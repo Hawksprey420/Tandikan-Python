@@ -31,106 +31,8 @@
         <div class="loader-track"><div class="loader-fill"></div></div>
     </div>
 
-    <!-- Sidebar (inlined - no partials) -->
-    <nav class="pc-sidebar">
-        <div class="navbar-wrapper">
-            <div class="m-header">
-                <a href="#" class="b-brand text-primary">
-                    <img src="{% static 'src/assets/images/logo-dark.svg' %}" class="img-fluid logo-lg" alt="logo">
-                </a>
-            </div>
-            <div class="navbar-content">
-                <ul class="pc-navbar">
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
-                            <span class="pc-mtext">Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item pc-caption">
-                        <label>List functions</label>
-                        <i class="ti ti-dashboard"></i>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'college_list' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-typography"></i></span>
-                            <span class="pc-mtext">Colleges</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'faculty_list' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-color-swatch"></i></span>
-                            <span class="pc-mtext">Faculty</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Accounting/Cashier</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-plant-2"></i></span>
-                            <span class="pc-mtext">Rooms</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'reports' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
-                            <span class="pc-mtext">Reports</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item pc-caption">
-                        <label>Tandikan functions:</label>
-                        <i class="ti ti-news"></i>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'student_list' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-users"></i></span>
-                            <span class="pc-mtext">Students</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'subject_list' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-book"></i></span>
-                            <span class="pc-mtext">Subjects</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'schedule_list' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-calendar"></i></span>
-                            <span class="pc-mtext">Class Schedules</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'enrollment' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-clipboard-list"></i></span>
-                            <span class="pc-mtext">Enrollment</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-brand-chrome"></i></span>
-                            <span class="pc-mtext">Easter egg for CSD faculty</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Sidebar -->
+    {% include 'includes/sidebar.html' %}
 
     <!-- Header (inlined - no partials) -->
     <header class="pc-header">
@@ -239,7 +141,7 @@
                     <li class="dropdown pc-h-item header-user-profile">
                         <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" data-bs-auto-close="outside" aria-expanded="false">
                             <img src="{% static 'src/assets/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar">
-                            <span>Stebin Ben</span>
+                            <span>{{ user.first_name }} {{ user.last_name|default:user.username }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
                             <div class="dropdown-header">
@@ -248,8 +150,8 @@
                                         <img src="{% static 'src/assets/images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar wid-35">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-1">Stebin Ben</h6>
-                                        <span>UI/UX Designer</span>
+                                        <h6 class="mb-1">{{ user.first_name }} {{ user.last_name|default:user.username }}</h6>
+                                        <span>{{ user.role|title }}</span>
                                     </div>
                                     <a href="#" class="pc-head-link bg-transparent"><i class="ti ti-power text-danger"></i></a>
                                 </div>

@@ -1,10 +1,15 @@
 from ..models import Assessment, EnrollmentSubject, Fee
 from decimal import Decimal
+from .table_of_fees import initialize_fees
 
 def generate_assessment(enrollment):
     """
     Generate assessment for a given enrollment.
     """
+    # Ensure fees exist
+    if not Fee.objects.exists():
+        initialize_fees()
+
     # Calculate total units
     enrollment_subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
     total_units = sum(es.schedule.subject.units for es in enrollment_subjects)

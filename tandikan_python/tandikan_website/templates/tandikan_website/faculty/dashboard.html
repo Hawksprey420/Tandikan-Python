@@ -20,6 +20,36 @@
   </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'schedule_list' %}" class="btn btn-warning w-100">
+                    <i class="ti ti-calendar me-2"></i> Class Schedules
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'subject_list' %}" class="btn btn-success w-100">
+                    <i class="ti ti-book me-2"></i> Subject List
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'student_list' %}" class="btn btn-primary w-100">
+                    <i class="ti ti-users me-2"></i> Enroll / Manage Students
+                </a>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main dashboard metrics -->
 <div class="row">
 
@@ -38,24 +68,10 @@
   <div class="col-md-6 col-xl-3">
     <div class="card">
       <div class="card-body">
-        <h6 class="text-muted mb-3">Total of enrolled students</h6>
+        <h6 class="text-muted mb-3">Total Enrolled Students</h6>
         <h3 class="mb-3">{{ total_students|default:"0" }}</h3> 
-        {% comment %} Replace this with mala-SQL na join later <h3 class="mb-3">{{ total_students|default:"0" }}</h3>  {% endcomment %}
         <p class="mb-0 text-muted">
-          Registered instructors
-        </p>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="col-md-6 col-xl-3">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted mb-3">Pending Enrollments</h6>
-        <h3 class="mb-3">{{ pending_enrollments|default:"0" }}</h3>
-        <p class="mb-0 text-muted">
-          Awaiting approval from cashier and accounting
+          Across all your subjects
         </p>
       </div>
     </div>
@@ -69,12 +85,10 @@
   <div class="col-xl-8 col-md-12">
     <div class="card">
       <div class="card-header">
-        <h5>Enrollment Statistics</h5>
+        <h5>Students per Subject</h5>
       </div>
       <div class="card-body">
-        <div id="enrollment-chart" style="height: 300px;">
-          <p class="text-center text-muted mt-5">Chart placeholder</p>
-        </div>
+        <div id="enrollment-chart" style="height: 300px;"></div>
       </div>
     </div>
   </div>
@@ -82,26 +96,59 @@
   <div class="col-xl-4 col-md-12">
     <div class="card">
       <div class="card-header">
-        <h5>Recent Activity</h5>
+        <h5>Recent Enrollments</h5>
       </div>
       <div class="card-body">
 
-        {% if logs %}
+        {% if recent_enrollments %}
         <ul class="list-group list-group-flush">
-          {% for log in logs %}
+          {% for item in recent_enrollments %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ log.message }}</span>
-            <small class="text-muted">{{ log.timestamp }}</small>
+            <div>
+              <span class="d-block">{{ item.enrollment.student }}</span>
+              <small class="text-muted">{{ item.schedule.subject.subject_code }}</small>
+            </div>
+            <small class="text-muted">{{ item.enrollment.date_enrolled|date:"M d" }}</small>
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="text-muted text-center">No recent activity.</p>
+        <p class="text-muted text-center">No recent enrollments.</p>
         {% endif %}
-
       </div>
     </div>
   </div>
 
 </div>
-{% endblock content %}
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var options = {
+      series: [{
+        name: 'Students',
+        data: {{ chart_data|safe }}
+      }],
+      chart: {
+        type: 'bar',
+        height: 300
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          horizontal: true,
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      xaxis: {
+        categories: {{ chart_labels|safe }},
+      }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#enrollment-chart"), options);
+    chart.render();
+  });
+</script>
+{% endblock %}
