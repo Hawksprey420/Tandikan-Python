@@ -70,6 +70,11 @@ urlpatterns = [
     path("students/create/", views.student_create, name="student_create"),
     path("students/delete/<str:student_id>/", views.student_delete, name="student_delete"),
     path("students/update/<str:student_id>/", views.student_update, name="student_update"),
+    path("students/enroll/<str:student_id>/", views.staff_enroll_student, name="staff_enroll_student"), # New
+
+    # Enrollment & Validation
+    path("enrollment/validate/<int:enrollment_id>/", views.validate_enrollment, name="validate_enrollment"), # New
+    path("enrollment/cor/<int:enrollment_id>/", views.print_cor, name="print_cor"), # New
 
     # Prerequisite Management
     path("prerequisites/", views.prerequisite_list, name="prerequisite_list"),

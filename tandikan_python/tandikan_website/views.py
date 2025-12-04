@@ -51,6 +51,7 @@ def student_dashboard(request):
             context['current_semester'] = f"{term.academic_year} - {term.get_semester_display()}"
             enrollment = Enrollment.objects.filter(student=student, term=term).first()
             if enrollment:
+                context['enrollment'] = enrollment
                 enrolled_subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
                 context['total_enrolled_subjects'] = enrolled_subjects.count()
                 total_units = enrolled_subjects.aggregate(Sum('schedule__subject__units'))['schedule__subject__units__sum']
@@ -631,3 +632,77 @@ def prerequisite_delete(request, prereq_id):
     prereq.delete()
     messages.success(request, "Prerequisite deleted successfully.")
     return redirect("prerequisite_list")
+
+# --------------------------------------------------------
+# STAFF ASSISTED ENROLLMENT
+# --------------------------------------------------------
+
+def staff_enroll_student(request, student_id):
+    # Allow Admin, Registrar, or Faculty (if acting as advisor) to enroll students
+    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar', 'instructor']:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+
+    student = StudentInfo.objects.get(pk=student_id)
+    term = AcademicTerm.objects.first() # Simplified: get active term
+
+    if not term:
+        messages.error(request, "No active academic term.")
+        return redirect("student_list")
+
+    if request.method == "POST":
+        schedule_ids = request.POST.getlist("schedule_ids")
+        success, result = enroll_student(student, term.term_id, schedule_ids)
+        
+        if success:
+            messages.success(request, f"Successfully enrolled {student.first_name} {student.last_name}.")
+            return redirect("student_list")
+        else:
+            messages.error(request, f"Enrollment failed: {result}")
+
+    # Show available schedules
+    schedules = ClassSchedule.objects.all()
+    base_template = get_base_template(request.user)
+    
+    # Check if already enrolled
+    current_enrollment = Enrollment.objects.filter(student=student, term=term).first()
+    enrolled_schedule_ids = []
+    if current_enrollment:
+        enrolled_schedule_ids = list(EnrollmentSubject.objects.filter(enrollment=current_enrollment).values_list('schedule_id', flat=True))
+
+    return render(request, "tandikan_website/admin/staff_enrollment.html", {
+        'student': student,
+        'schedules': schedules,
+        'term': term,
+        'base_template': base_template,
+        'enrolled_schedule_ids': enrolled_schedule_ids
+    })
+
+def validate_enrollment(request, enrollment_id):
+    # Cashier validates enrollment after payment
+    if not request.user.is_authenticated or request.user.role != 'cashier':
+        messages.error(request, "Access denied.")
+        return redirect("login")
+        
+    enrollment = Enrollment.objects.get(pk=enrollment_id)
+    enrollment.is_validated = True
+    enrollment.save()
+    
+    messages.success(request, "Enrollment validated successfully.")
+    return redirect("admin_payment_list")
+
+def print_cor(request, enrollment_id):
+    # Certificate of Registration
+    enrollment = Enrollment.objects.get(pk=enrollment_id)
+    
+    if not enrollment.is_validated:
+        messages.warning(request, "This enrollment is not yet validated.")
+    
+    subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
+    assessment = Assessment.objects.filter(enrollment=enrollment).first()
+    
+    return render(request, "tandikan_website/student/cor.html", {
+        'enrollment': enrollment,
+        'subjects': subjects,
+        'assessment': assessment
+    })

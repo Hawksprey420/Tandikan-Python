@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Certificate of Registration{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header text-center">
+            <h3>Tandikan University</h3>
+            <h5>Certificate of Registration</h5>
+            <p>{{ enrollment.term.academic_year }} - {{ enrollment.term.get_semester_display }}</p>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Student Name:</strong> {{ enrollment.student.last_name }}, {{ enrollment.student.first_name }}</p>
+                    <p><strong>Student ID:</strong> {{ enrollment.student.student_id }}</p>
+                    <p><strong>Course:</strong> {{ enrollment.student.course.course_code }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p><strong>Date:</strong> {% now "F j, Y" %}</p>
+                    <p><strong>Status:</strong> 
+                        {% if enrollment.is_validated %}
+                            <span class="badge bg-success">Validated</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending Validation</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Description</th>
+                        <th>Units</th>
+                        <th>Schedule</th>
+                        <th>Room</th>
+                        <th>Instructor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in subjects %}
+                    <tr>
+                        <td>{{ item.schedule.subject.subject_code }}</td>
+                        <td>{{ item.schedule.subject.subject_name }}</td>
+                        <td>{{ item.schedule.subject.units }}</td>
+                        <td>{{ item.schedule.day }} {{ item.schedule.start_time|time:"H:i" }}-{{ item.schedule.end_time|time:"H:i" }}</td>
+                        <td>{{ item.schedule.room }}</td>
+                        <td>{{ item.schedule.instructor }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Assessment</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Tuition Fee:</td>
+                            <td class="text-end">{{ assessment.tuition_fee }}</td>
+                        </tr>
+                        <tr>
+                            <td>Miscellaneous Fee:</td>
+                            <td class="text-end">{{ assessment.miscellaneous_fee }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total:</strong></td>
+                            <td class="text-end"><strong>{{ assessment.total_amount }}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-center d-print-none">
+            <button onclick="window.print()" class="btn btn-primary">Print COR</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

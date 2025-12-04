@@ -19,6 +19,8 @@
                                 <th>Amount Paid</th>
                                 <th>Date Paid</th>
                                 <th>Cashier</th>
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -28,10 +30,24 @@
                                 <td>{{ payment.amount_paid }}</td>
                                 <td>{{ payment.date_paid }}</td>
                                 <td>{{ payment.cashier.username|default:'-' }}</td>
+                                <td>
+                                    {% if payment.assessment.enrollment.is_validated %}
+                                        <span class="badge bg-success">Validated</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not payment.assessment.enrollment.is_validated %}
+                                        <a href="{% url 'validate_enrollment' payment.assessment.enrollment.enrollment_id %}" class="btn btn-sm btn-success">Validate</a>
+                                    {% else %}
+                                        <a href="{% url 'print_cor' payment.assessment.enrollment.enrollment_id %}" class="btn btn-sm btn-info" target="_blank">Print COR</a>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center">No payments found.</td>
+                                <td colspan="6" class="text-center">No payments found.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

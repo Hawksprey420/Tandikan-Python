@@ -184,12 +184,13 @@ class Enrollment(models.Model):
     student = models.ForeignKey(StudentInfo, on_delete=models.CASCADE)
     term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE)
     date_enrolled = models.DateTimeField(default=timezone.now)
+    is_validated = models.BooleanField(default=False)  # New field for validation status
 
     class Meta:
         unique_together = ('student', 'term')
 
     def __str__(self):
-        return f"{self.student.student_id} - {self.term}"
+        return f"{self.student.student_id} - {self.term} ({'Validated' if self.is_validated else 'Pending'})"
 
 
 class EnrollmentSubject(models.Model):

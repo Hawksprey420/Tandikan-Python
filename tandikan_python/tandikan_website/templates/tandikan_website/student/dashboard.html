@@ -48,6 +48,26 @@
     </div>
   </div>
 
+  <div class="col-md-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Enrollment Status</h6>
+        {% if enrollment %}
+            {% if enrollment.is_validated %}
+                <h3 class="mb-3 text-success">Enrolled</h3>
+                <a href="{% url 'print_cor' enrollment.enrollment_id %}" class="btn btn-primary btn-sm" target="_blank">View COR</a>
+            {% else %}
+                <h3 class="mb-3 text-warning">Pending Validation</h3>
+                <p class="mb-0 text-muted">Please proceed to cashier</p>
+            {% endif %}
+        {% else %}
+            <h3 class="mb-3 text-muted">Not Enrolled</h3>
+            <p class="mb-0 text-muted">Please contact registrar</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
 
 </div>
 
