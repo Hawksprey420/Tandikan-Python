@@ -2,6 +2,8 @@
 
 A comprehensive, role-based Enrollment and School Management System built with Django. This system streamlines the academic processes of a higher education institution, managing everything from student admission to grade encoding and financial assessment.
 
+[📘 View Technical Documentation & Database Design](TECHNICAL_DOCS.md)
+
 ## 🚀 Features
 
 ### Core Functionality
