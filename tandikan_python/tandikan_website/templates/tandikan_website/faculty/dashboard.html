@@ -77,6 +77,74 @@
     </div>
   </div>
 
+  <div class="col-md-6 col-xl-6">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <h6 class="text-white mb-3">Today's Classes</h6>
+        {% if todays_classes %}
+            <ul class="list-unstyled">
+            {% for cls in todays_classes %}
+                <li class="mb-2">
+                    <strong>{{ cls.schedule.start_time|time:"H:i" }} - {{ cls.schedule.end_time|time:"H:i" }}</strong>: 
+                    {{ cls.schedule.subject.subject_code }} ({{ cls.schedule.section_name }}) - {{ cls.schedule.room }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <h3 class="mb-3">No classes today</h3>
+            <p class="mb-0 text-white-50">Enjoy your day!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- My Teaching Load Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Teaching Load</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Subject Code</th>
+                                <th>Description</th>
+                                <th>Section</th>
+                                <th>Schedule</th>
+                                <th>Room</th>
+                                <th>Enrolled</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cls in my_classes %}
+                            <tr>
+                                <td>{{ cls.schedule.subject.subject_code }}</td>
+                                <td>{{ cls.schedule.subject.subject_name }}</td>
+                                <td>{{ cls.schedule.section_name }}</td>
+                                <td>{{ cls.schedule.day }} {{ cls.schedule.start_time|time:"H:i" }}-{{ cls.schedule.end_time|time:"H:i" }}</td>
+                                <td>{{ cls.schedule.room }}</td>
+                                <td><span class="badge bg-info">{{ cls.student_count }}</span></td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">View Class List</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No subjects assigned.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Charts + Recent Activity -->

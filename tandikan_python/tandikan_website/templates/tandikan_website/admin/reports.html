@@ -21,6 +21,7 @@
 </div>
 
 <div class="row">
+    {% if enrollment_stats %}
     <!-- Enrollment per Course/Year -->
     <div class="col-md-6">
         <div class="card">
@@ -55,7 +56,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if semester_stats %}
     <!-- Enrollment per Semester -->
     <div class="col-md-6">
         <div class="card">
@@ -90,9 +93,11 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <div class="row">
+    {% if collection_stats %}
     <!-- Collection Report -->
     <div class="col-md-12">
         <div class="card">
@@ -112,7 +117,7 @@
                             {% for stat in collection_stats %}
                             <tr>
                                 <td>{{ stat.date_paid__date }}</td>
-                                <td>{{ stat.total }}</td>
+                                <td>₱{{ stat.total|floatformat:2 }}</td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -125,5 +130,90 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
+    {% if faculty_subject_stats %}
+    <!-- Faculty Subject Report -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Subject Enrollment Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Subject Code</th>
+                                <th>Description</th>
+                                <th>Section</th>
+                                <th>Enrolled Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in faculty_subject_stats %}
+                            <tr>
+                                <td>{{ stat.schedule__subject__subject_code }}</td>
+                                <td>{{ stat.schedule__subject__subject_name }}</td>
+                                <td>{{ stat.schedule__section_name }}</td>
+                                <td><span class="badge bg-success">{{ stat.count }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if student_enrollment_history %}
+    <!-- Student Enrollment History -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Enrollment History</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Academic Year</th>
+                                <th>Semester</th>
+                                <th>Date Enrolled</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enrollment in student_enrollment_history %}
+                            <tr>
+                                <td>{{ enrollment.term.academic_year }}</td>
+                                <td>{{ enrollment.term.get_semester_display }}</td>
+                                <td>{{ enrollment.date_enrolled|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if enrollment.is_validated %}
+                                        <span class="badge bg-success">Validated</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No enrollment history found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

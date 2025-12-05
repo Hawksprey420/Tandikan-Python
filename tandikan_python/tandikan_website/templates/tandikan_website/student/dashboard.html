@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-block">
     <div class="row align-items-center">
-      <div class="col-md-12">
+      <div class="col-md-8">
         <div class="page-header-title">
           <h5 class="m-b-10">Dashboard</h5>
         </div>
@@ -15,6 +15,15 @@
           </li>
           <li class="breadcrumb-item" aria-current="page">Dashboard</li>
         </ul>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" onchange="window.location.href='?term_id='+this.value">
+            {% for t in all_terms %}
+            <option value="{{ t.term_id }}" {% if t.term_id == term.term_id %}selected{% endif %}>
+                {{ t.academic_year }} - {{ t.get_semester_display }}
+            </option>
+            {% endfor %}
+        </select>
       </div>
     </div>
   </div>
@@ -26,10 +35,10 @@
   <div class="col-md-6 col-xl-3">
     <div class="card">
       <div class="card-body">
-        <h6 class="text-muted mb-3">Total Enrolled Subjects for Semester {{ current_semester }}</h6>
+        <h6 class="text-muted mb-3">Total Enrolled Subjects</h6>
         <h3 class="mb-3">{{ total_enrolled_subjects|default:"0" }}</h3>
         <p class="mb-0 text-muted">
-          Active this semester
+          {{ current_semester }}
         </p>
       </div>
     </div>
@@ -38,12 +47,28 @@
   <div class="col-md-6 col-xl-3">
     <div class="card">
       <div class="card-body">
-        <h6 class="text-muted mb-3">Total of units</h6>
+        <h6 class="text-muted mb-3">Total Units</h6>
         <h3 class="mb-3">{{ total_units|default:"0" }}</h3> 
-        {% comment %} Replace this with mala-SQL na join later <h3 class="mb-3">{{ total_units|default:"0" }}</h3>  {% endcomment %}
         <p class="mb-0 text-muted">
-          Registered instructors
+          Academic Load
         </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Outstanding Balance</h6>
+        {% if financial_status %}
+            <h3 class="mb-3">₱{{ financial_status.balance|floatformat:2 }}</h3>
+            <p class="mb-0 text-muted">
+              Total: ₱{{ financial_status.total_assessment|floatformat:2 }}
+            </p>
+        {% else %}
+            <h3 class="mb-3">₱0.00</h3>
+            <p class="mb-0 text-muted">No assessment</p>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -57,31 +82,55 @@
                 <h3 class="mb-3 text-success">Enrolled</h3>
                 <a href="{% url 'print_cor' enrollment.enrollment_id %}" class="btn btn-primary btn-sm" target="_blank">View COR</a>
             {% else %}
-                <h3 class="mb-3 text-warning">Pending Validation</h3>
-                <p class="mb-0 text-muted">Please proceed to cashier</p>
+                <h3 class="mb-3 text-warning">Pending</h3>
+                <p class="mb-0 text-muted">For Validation</p>
             {% endif %}
         {% else %}
             <h3 class="mb-3 text-muted">Not Enrolled</h3>
-            <p class="mb-0 text-muted">Please contact registrar</p>
+            <p class="mb-0 text-muted">Contact Registrar</p>
         {% endif %}
       </div>
     </div>
   </div>
 
-
 </div>
 
-<!-- Charts + Recent Activity -->
+<!-- Schedule and Profile -->
 <div class="row">
 
   <div class="col-xl-8 col-md-12">
     <div class="card">
       <div class="card-header">
-        <h5>Enrollment Statistics</h5>
+        <h5>My Class Schedule</h5>
       </div>
-      <div class="card-body">
-        <div id="enrollment-chart" style="height: 300px;">
-          <p class="text-center text-muted mt-5">Chart placeholder</p>
+      <div class="card-body table-border-style">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Description</th>
+                        <th>Schedule</th>
+                        <th>Room</th>
+                        <th>Instructor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enrolled_subjects %}
+                    <tr>
+                        <td>{{ item.schedule.subject.subject_code }}</td>
+                        <td>{{ item.schedule.subject.subject_name }}</td>
+                        <td>{{ item.schedule.day }} {{ item.schedule.start_time|time:"g:i A" }}-{{ item.schedule.end_time|time:"g:i A" }}</td>
+                        <td>{{ item.schedule.room }}</td>
+                        <td>{{ item.schedule.instructor.last_name }}, {{ item.schedule.instructor.first_name|slice:":1" }}.</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No subjects enrolled yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
       </div>
     </div>
@@ -90,26 +139,34 @@
   <div class="col-xl-4 col-md-12">
     <div class="card">
       <div class="card-header">
-        <h5>Recent Activity</h5>
+        <h5>My Profile</h5>
       </div>
       <div class="card-body">
-
-        {% if logs %}
+        <div class="text-center mb-4">
+            <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="img-fluid rounded-circle mb-3" alt="User-Profile-Image" style="width: 120px; height: 120px; object-fit: cover;">
+            <h5 class="mt-3">{{ student.first_name }} {{ student.last_name }}</h5>
+            <p class="text-muted">{{ student.student_id }}</p>
+        </div>
         <ul class="list-group list-group-flush">
-          {% for log in logs %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ log.message }}</span>
-            <small class="text-muted">{{ log.timestamp }}</small>
-          </li>
-          {% endfor %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                Program
+                <span class="badge bg-primary rounded-pill">{{ student.program.program_code }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                Year Level
+                <span class="badge bg-info rounded-pill">{{ student.year_level }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                College
+                <span class="text-muted">{{ student.college.college_name }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                Email
+                <span class="text-muted">{{ student.email }}</span>
+            </li>
         </ul>
-        {% else %}
-        <p class="text-muted text-center">No recent activity.</p>
-        {% endif %}
-
       </div>
     </div>
   </div>
 
-</div>
-{% endblock content %}
+</div>{% endblock content %}

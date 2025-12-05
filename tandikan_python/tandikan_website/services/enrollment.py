@@ -16,24 +16,38 @@ def enroll_student(student, term_id, schedule_ids):
         if not is_valid:
             return False, error
 
-    # 2. Validate Schedule Conflicts (Internal to the selection)
+    # 2. Validate Schedule Conflicts (Internal to the selection + Existing Enrollments)
     selected_schedules = []
+    
+    # Check for existing enrollment to validate against already enrolled subjects
+    existing_enrollment = Enrollment.objects.filter(student=student, term=term).first()
+    existing_schedules = []
+    if existing_enrollment:
+        existing_schedules = list(ClassSchedule.objects.filter(enrollmentsubject__enrollment=existing_enrollment))
+
     for schedule in schedules:
+        # Check against other NEWLY selected schedules
         is_valid, error = validate_schedule_conflicts(schedule, selected_schedules)
         if not is_valid:
             return False, error
+            
+        # Check against EXISTING schedules
+        is_valid, error = validate_schedule_conflicts(schedule, existing_schedules)
+        if not is_valid:
+            return False, f"Conflict with existing enrollment: {error}"
+
         selected_schedules.append(schedule)
 
     # 3. Create Enrollment
     try:
         with transaction.atomic():
-            enrollment = Enrollment.objects.create(
+            enrollment, created = Enrollment.objects.get_or_create(
                 student=student,
                 term=term
             )
             
             for schedule in schedules:
-                EnrollmentSubject.objects.create(
+                EnrollmentSubject.objects.get_or_create(
                     enrollment=enrollment,
                     schedule=schedule
                 )

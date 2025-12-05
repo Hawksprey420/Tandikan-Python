@@ -31,6 +31,11 @@
                             <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
                             <span class="pc-mtext">Dashboard</span>
                         </a>
+                    {% elif user.role == 'student' %}
+                        <a href="{% url 'student_dashboard' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
                     {% endif %}
                 </li>
 
@@ -207,55 +212,88 @@
                 <!-- Faculty Section -->
                 {% if user.role == 'instructor' %}
                 <li class="pc-item pc-caption">
-                    <label>List functions</label>
-                    <i class="ti ti-dashboard"></i>
+                    <label>Teaching</label>
+                    <i class="ti ti-book"></i>
                 </li>
 
                 <li class="pc-item">
                     <a href="{% url 'schedule_list' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-typography"></i></span>
-                        <span class="pc-mtext">{% if user.role == 'admin' %}Class Schedules{% else %}Your subjects{% endif %}</span>
-                    </a>
-                </li>
-
-                <li class="pc-item">
-                    <a href="{% url 'faculty_list' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-users"></i></span>
-                        <span class="pc-mtext">Faculty management</span>
-                    </a>
-                </li>
-
-
-                <li class="pc-item">
-                    <a href="{% url 'room_list' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-building"></i></span>
-                        <span class="pc-mtext">Rooms</span>
-                    </a>
-                </li>
-
-                <li class="pc-item">
-                    <a href="{% url 'reports' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-file-analytics"></i></span>
-                        <span class="pc-mtext">System logs</span>
-                    </a>
-                </li>
-
-                <li class="pc-item pc-caption">
-                    <label>Tandikan functions:</label>
-                    <i class="ti ti-news"></i>
-                </li>
-
-                <li class="pc-item">
-                    <a href="{% url 'student_list' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
-                        <span class="pc-mtext">Enroll student on subjects</span>
+                        <span class="pc-micon"><i class="ti ti-calendar"></i></span>
+                        <span class="pc-mtext">My Schedule</span>
                     </a>
                 </li>
 
                 <li class="pc-item">
                     <a href="{% url 'subject_list' %}" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-book"></i></span>
-                        <span class="pc-mtext">View/modify subjects</span>
+                        <span class="pc-micon"><i class="ti ti-list"></i></span>
+                        <span class="pc-mtext">Subject Catalog</span>
+                    </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label>Student Management</label>
+                    <i class="ti ti-users"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'student_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
+                        <span class="pc-mtext">Advising & Enrollment</span>
+                    </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label>Resources</label>
+                    <i class="ti ti-info-circle"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'faculty_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-id"></i></span>
+                        <span class="pc-mtext">Faculty Directory</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'room_list' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-building"></i></span>
+                        <span class="pc-mtext">Room Availability</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'reports' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-chart-bar"></i></span>
+                        <span class="pc-mtext">Reports</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Student Section -->
+                {% if user.role == 'student' %}
+                <li class="pc-item pc-caption">
+                    <label>My Academics</label>
+                    <i class="ti ti-book"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'student_dashboard' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-calendar"></i></span>
+                        <span class="pc-mtext">My Schedule</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'enrollment' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-edit"></i></span>
+                        <span class="pc-mtext">Enrollment</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'reports' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-history"></i></span>
+                        <span class="pc-mtext">Enrollment History</span>
                     </a>
                 </li>
                 {% endif %}

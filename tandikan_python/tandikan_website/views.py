@@ -78,24 +78,64 @@ def student_dashboard(request):
     context = {}
     try:
         student = StudentInfo.objects.get(user=request.user)
-        # Get current term (simplified)
-        term = AcademicTerm.objects.order_by('-term_id').first()
+        context['student'] = student
+        
+        # Get all terms for selection
+        all_terms = AcademicTerm.objects.all().order_by('-academic_year', '-semester')
+        context['all_terms'] = all_terms
+
+        # Determine selected term
+        term_id = request.GET.get('term_id')
+        if term_id:
+            try:
+                term = AcademicTerm.objects.get(pk=term_id)
+            except AcademicTerm.DoesNotExist:
+                term = AcademicTerm.objects.order_by('-term_id').first()
+        else:
+            term = AcademicTerm.objects.order_by('-term_id').first()
+
+        context['term'] = term
+
         if term:
             context['current_semester'] = f"{term.academic_year} - {term.get_semester_display()}"
             enrollment = Enrollment.objects.filter(student=student, term=term).first()
             if enrollment:
                 context['enrollment'] = enrollment
-                enrolled_subjects = EnrollmentSubject.objects.filter(enrollment=enrollment)
+                
+                # Schedule
+                enrolled_subjects = EnrollmentSubject.objects.filter(enrollment=enrollment).select_related('schedule__subject', 'schedule__instructor')
+                context['enrolled_subjects'] = enrolled_subjects
                 context['total_enrolled_subjects'] = enrolled_subjects.count()
+                
                 total_units = enrolled_subjects.aggregate(Sum('schedule__subject__units'))['schedule__subject__units__sum']
                 context['total_units'] = total_units if total_units else 0
+                
+                # Financials
+                try:
+                    assessment = Assessment.objects.get(enrollment=enrollment)
+                    total_paid_agg = Payment.objects.filter(assessment=assessment).aggregate(Sum('amount_paid'))
+                    total_paid = total_paid_agg['amount_paid__sum'] or 0
+                    balance = assessment.total_amount - total_paid
+                    
+                    context['financial_status'] = {
+                        'total_assessment': assessment.total_amount,
+                        'total_paid': total_paid,
+                        'balance': balance
+                    }
+                except Assessment.DoesNotExist:
+                    context['financial_status'] = None
+
             else:
                 context['total_enrolled_subjects'] = 0
                 context['total_units'] = 0
+                context['enrolled_subjects'] = []
+                context['financial_status'] = None
         else:
             context['current_semester'] = "No Active Term"
             context['total_enrolled_subjects'] = 0
             context['total_units'] = 0
+            context['enrolled_subjects'] = []
+            context['financial_status'] = None
             
     except StudentInfo.DoesNotExist:
         pass
@@ -258,6 +298,60 @@ def faculty_dashboard(request):
         # Recent Activity (e.g., recent enrollments in their classes)
         recent_enrollments = EnrollmentSubject.objects.filter(schedule__in=schedules)\
             .order_by('-enrollment__date_enrolled')[:5]
+
+        # Detailed Class List with Counts
+        my_classes = []
+        for sched in schedules:
+            count = EnrollmentSubject.objects.filter(schedule=sched).count()
+            my_classes.append({
+                'schedule': sched,
+                'student_count': count
+            })
+
+        # Determine Today's Classes
+        today_weekday = datetime.datetime.today().weekday() # 0=Mon, 6=Sun
+        # Simple mapping for "MWF", "TTh" style strings
+        # This is a heuristic.
+        day_map = {
+            0: ['M', 'Mon'],
+            1: ['T', 'Tue'], # careful with Th
+            2: ['W', 'Wed'],
+            3: ['Th', 'Thu'],
+            4: ['F', 'Fri'],
+            5: ['S', 'Sat'],
+            6: ['Su', 'Sun']
+        }
+        
+        todays_classes = []
+        target_tokens = day_map.get(today_weekday, [])
+        
+        for cls in my_classes:
+            sched_day = cls['schedule'].day
+            # Check if any token is in the schedule day string
+            # Special case for T vs Th: if today is Tuesday (1), we look for 'T' but not followed by 'h' if possible, 
+            # but 'TTh' contains 'T'. 
+            # Let's keep it simple:
+            is_today = False
+            if today_weekday == 1: # Tuesday
+                if 'T' in sched_day and 'Th' not in sched_day: # Matches T but not Th? No, TTh has T.
+                     # If sched_day is "TTh", it means Tue AND Thu. So it IS today.
+                     is_today = True
+                elif 'Tue' in sched_day:
+                    is_today = True
+                elif 'TTh' in sched_day: # Explicit TTh
+                    is_today = True
+            elif today_weekday == 3: # Thursday
+                if 'Th' in sched_day or 'Thu' in sched_day:
+                    is_today = True
+            else:
+                # Mon, Wed, Fri, Sat, Sun
+                for token in target_tokens:
+                    if token in sched_day:
+                        is_today = True
+                        break
+            
+            if is_today:
+                todays_classes.append(cls)
             
     except Faculty.DoesNotExist:
         total_subjects = 0
@@ -265,6 +359,8 @@ def faculty_dashboard(request):
         chart_labels = []
         chart_data = []
         recent_enrollments = []
+        my_classes = []
+        todays_classes = []
 
     context = {
         'total_subjects': total_subjects,
@@ -272,6 +368,8 @@ def faculty_dashboard(request):
         'chart_labels': chart_labels,
         'chart_data': chart_data,
         'recent_enrollments': recent_enrollments,
+        'my_classes': my_classes,
+        'todays_classes': todays_classes,
     }
     return render(request, "tandikan_website/faculty/dashboard.html", context)
 
@@ -381,14 +479,29 @@ def enrollment_view(request):
         messages.error(request, "Student profile not found.")
         return redirect("student_dashboard")
 
-    # Get current term (simplified: just get the first one or active one)
-    # In a real app, you'd have an 'is_active' flag or logic to determine current term
-    term = AcademicTerm.objects.first() 
+    # Get all terms for selection
+    all_terms = AcademicTerm.objects.all().order_by('-academic_year', '-semester')
+    
+    # Determine selected term
+    term_id = request.GET.get('term_id')
+    if term_id:
+        try:
+            term = AcademicTerm.objects.get(pk=term_id)
+        except AcademicTerm.DoesNotExist:
+            term = AcademicTerm.objects.order_by('-term_id').first()
+    else:
+        term = AcademicTerm.objects.order_by('-term_id').first() # Get latest term
+
     if not term:
         messages.error(request, "No active academic term.")
         return redirect("student_dashboard")
 
     if request.method == "POST":
+        # Use the term from the POST request to ensure consistency
+        post_term_id = request.POST.get("term_id")
+        if post_term_id:
+            term = AcademicTerm.objects.get(pk=post_term_id)
+            
         schedule_ids = request.POST.getlist("schedule_ids")
         success, result = enroll_student(student, term.term_id, schedule_ids)
         
@@ -398,13 +511,26 @@ def enrollment_view(request):
         else:
             messages.error(request, f"Enrollment failed: {result}")
 
-    # Show available schedules (Filtered by Program and Year Level)
+    # Show available schedules (Filtered by Program and Semester)
+    # We include subjects for the student's program OR shared subjects (program is None)
+    # We removed the year_level filter to allow students to see all available subjects for the term
     schedules = ClassSchedule.objects.filter(
-        subject__program=student.program,
-        subject__year_level=student.year_level,
+        Q(subject__program=student.program) | Q(subject__program__isnull=True),
         subject__semester=term.semester
     )
-    return render(request, "tandikan_website/student/enrollment.html", {'schedules': schedules, 'term': term})
+    
+    # Check if already enrolled
+    current_enrollment = Enrollment.objects.filter(student=student, term=term).first()
+    enrolled_schedule_ids = []
+    if current_enrollment:
+        enrolled_schedule_ids = list(EnrollmentSubject.objects.filter(enrollment=current_enrollment).values_list('schedule_id', flat=True))
+
+    return render(request, "tandikan_website/student/enrollment.html", {
+        'schedules': schedules, 
+        'term': term,
+        'all_terms': all_terms,
+        'enrolled_schedule_ids': enrolled_schedule_ids
+    })
 
 # --------------------------------------------------------
 # ASSESSMENT & PAYMENT
@@ -630,51 +756,117 @@ def program_delete(request, program_id):
 # --------------------------------------------------------
 
 def reports_view(request):
-    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar', 'cashier', 'instructor']:
+    if not request.user.is_authenticated:
         messages.error(request, "Access denied.")
         return redirect("login")
 
-    # 1. Enrolled students per course and year level
-    enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
-    
-    # 2. Total enrollment per semester
-    semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
-    
-    # 3. Collection report
-    collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+    # Initialize stats
+    enrollment_stats = None
+    semester_stats = None
+    collection_stats = None
+    faculty_subject_stats = None
+    student_enrollment_history = None
+
+    role = request.user.role
+
+    # Admin: All reports
+    if role == 'admin':
+        enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
+        semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
+        collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+
+    # Registrar: Enrollment and Semester stats (Majority but not financial)
+    elif role == 'registrar':
+        enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
+        semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
+
+    # Cashier: Only finances
+    elif role == 'cashier':
+        collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+
+    # Faculty: Faculty related (Students per subject)
+    elif role == 'instructor':
+        try:
+            faculty = Faculty.objects.get(user=request.user)
+            faculty_subject_stats = EnrollmentSubject.objects.filter(schedule__instructor=faculty)\
+                .values('schedule__subject__subject_code', 'schedule__subject__subject_name', 'schedule__section_name')\
+                .annotate(count=Count('enrollment__student'))\
+                .order_by('schedule__subject__subject_code')
+        except Faculty.DoesNotExist:
+            pass
+
+    # Student: Enrollment History (Units per term)
+    elif role == 'student':
+        try:
+            student = StudentInfo.objects.get(user=request.user)
+            student_enrollment_history = Enrollment.objects.filter(student=student).order_by('-term__academic_year', '-term__semester')
+            # We can annotate total units if needed, but let's just pass the enrollments for now
+            # Or calculate units manually in template or here
+        except StudentInfo.DoesNotExist:
+            pass
+
+    else:
+        messages.error(request, "Access denied.")
+        return redirect("login")
     
     # Log report generation
     ReportLog.objects.create(
-        report_name="General Summary Report",
+        report_name=f"Report generated for {role}",
         generated_by=request.user
     )
     
-    base_template = "admin_base.html"
-    if request.user.role == "cashier":
-        base_template = "cashier_base.html"
-    elif request.user.role == "registrar":
-        base_template = "registrar_base.html"
-    elif request.user.role == "instructor":
-        base_template = "faculty_base.html"
+    base_template = get_base_template(request.user)
+    if role == 'student':
+        base_template = 'student_base.html'
 
     return render(request, "tandikan_website/admin/reports.html", {
         'enrollment_stats': enrollment_stats,
         'semester_stats': semester_stats,
         'collection_stats': collection_stats,
+        'faculty_subject_stats': faculty_subject_stats,
+        'student_enrollment_history': student_enrollment_history,
         'base_template': base_template
     })
 
 def export_reports(request):
-    if not request.user.is_authenticated or request.user.role not in ['admin', 'registrar', 'cashier']:
+    if not request.user.is_authenticated:
         messages.error(request, "Access denied.")
         return redirect("login")
         
     report_format = request.GET.get('format', 'csv')
+    role = request.user.role
 
-    # Data Gathering
-    enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
-    semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
-    collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+    # Data Gathering (Same logic as reports_view)
+    enrollment_stats = None
+    semester_stats = None
+    collection_stats = None
+    faculty_subject_stats = None
+    student_enrollment_history = None
+
+    if role == 'admin':
+        enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
+        semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
+        collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+    elif role == 'registrar':
+        enrollment_stats = Enrollment.objects.values('student__program__program_code', 'student__year_level').annotate(count=Count('student'))
+        semester_stats = Enrollment.objects.values('term__academic_year', 'term__semester').annotate(count=Count('student'))
+    elif role == 'cashier':
+        collection_stats = Payment.objects.values('date_paid__date').annotate(total=Sum('amount_paid'))
+    elif role == 'instructor':
+        try:
+            faculty = Faculty.objects.get(user=request.user)
+            faculty_subject_stats = EnrollmentSubject.objects.filter(schedule__instructor=faculty)\
+                .values('schedule__subject__subject_code', 'schedule__subject__subject_name', 'schedule__section_name')\
+                .annotate(count=Count('enrollment__student'))\
+                .order_by('schedule__subject__subject_code')
+        except Faculty.DoesNotExist:
+            pass
+    elif role == 'student':
+        try:
+            student = StudentInfo.objects.get(user=request.user)
+            student_enrollment_history = Enrollment.objects.filter(student=student).order_by('-term__academic_year', '-term__semester')
+        except StudentInfo.DoesNotExist:
+            pass
 
     if report_format == 'pdf':
         template_path = 'tandikan_website/reports/pdf_report.html'
@@ -682,11 +874,13 @@ def export_reports(request):
             'enrollment_stats': enrollment_stats,
             'semester_stats': semester_stats,
             'collection_stats': collection_stats,
+            'faculty_subject_stats': faculty_subject_stats,
+            'student_enrollment_history': student_enrollment_history,
             'generated_by': request.user,
             'date_generated': datetime.datetime.now()
         }
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="enrollment_report.pdf"'
+        response['Content-Disposition'] = 'attachment; filename="report.pdf"'
         template = get_template(template_path)
         html = template.render(context)
         pisa_status = pisa.CreatePDF(html, dest=response)
@@ -696,19 +890,34 @@ def export_reports(request):
 
     # CSV Export (Default)
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="enrollment_report.csv"'
+    response['Content-Disposition'] = 'attachment; filename="report.csv"'
     
     writer = csv.writer(response)
     writer.writerow(['Report Type', 'Category', 'Count/Amount'])
     
-    for stat in enrollment_stats:
-        writer.writerow(['Enrollment per Course/Year', f"{stat['student__program__program_code']} - Year {stat['student__year_level']}", stat['count']])
+    if enrollment_stats:
+        for stat in enrollment_stats:
+            writer.writerow(['Enrollment per Course/Year', f"{stat['student__program__program_code']} - Year {stat['student__year_level']}", stat['count']])
         
-    for stat in semester_stats:
-        writer.writerow(['Enrollment per Semester', f"{stat['term__academic_year']} - {stat['term__semester']}", stat['count']])
+    if semester_stats:
+        for stat in semester_stats:
+            writer.writerow(['Enrollment per Semester', f"{stat['term__academic_year']} - {stat['term__semester']}", stat['count']])
         
-    for stat in collection_stats:
-        writer.writerow(['Collection', str(stat['date_paid__date']), stat['total']])
+    if collection_stats:
+        for stat in collection_stats:
+            writer.writerow(['Collection', str(stat['date_paid__date']), stat['total']])
+
+    if faculty_subject_stats:
+        writer.writerow([])
+        writer.writerow(['Subject Code', 'Description', 'Section', 'Enrolled Count'])
+        for stat in faculty_subject_stats:
+            writer.writerow([stat['schedule__subject__subject_code'], stat['schedule__subject__subject_name'], stat['schedule__section_name'], stat['count']])
+
+    if student_enrollment_history:
+        writer.writerow([])
+        writer.writerow(['Academic Year', 'Semester', 'Date Enrolled', 'Status'])
+        for enrollment in student_enrollment_history:
+            writer.writerow([enrollment.term.academic_year, enrollment.term.get_semester_display(), enrollment.date_enrolled, 'Validated' if enrollment.is_validated else 'Pending'])
         
     return response
 
@@ -954,18 +1163,35 @@ def staff_enroll_student(request, student_id):
         return redirect("login")
 
     student = StudentInfo.objects.get(pk=student_id)
-    term = AcademicTerm.objects.order_by('-term_id').first() # Get latest term
+    
+    # Get all terms for selection
+    all_terms = AcademicTerm.objects.all().order_by('-academic_year', '-semester')
+    
+    # Determine selected term
+    term_id = request.GET.get('term_id')
+    if term_id:
+        try:
+            term = AcademicTerm.objects.get(pk=term_id)
+        except AcademicTerm.DoesNotExist:
+            term = AcademicTerm.objects.order_by('-term_id').first()
+    else:
+        term = AcademicTerm.objects.order_by('-term_id').first() # Get latest term
 
     if not term:
         messages.error(request, "No active academic term.")
         return redirect("student_list")
 
     if request.method == "POST":
+        # Use the term from the POST request to ensure consistency
+        post_term_id = request.POST.get("term_id")
+        if post_term_id:
+            term = AcademicTerm.objects.get(pk=post_term_id)
+            
         schedule_ids = request.POST.getlist("schedule_ids")
         success, result = enroll_student(student, term.term_id, schedule_ids)
         
         if success:
-            messages.success(request, f"Successfully enrolled {student.first_name} {student.last_name}.")
+            messages.success(request, f"Successfully enrolled {student.first_name} {student.last_name} for {term}.")
             return redirect("student_list")
         else:
             messages.error(request, f"Enrollment failed: {result}")
@@ -984,6 +1210,7 @@ def staff_enroll_student(request, student_id):
         'student': student,
         'schedules': schedules,
         'term': term,
+        'all_terms': all_terms,
         'base_template': base_template,
         'enrolled_schedule_ids': enrolled_schedule_ids
     })

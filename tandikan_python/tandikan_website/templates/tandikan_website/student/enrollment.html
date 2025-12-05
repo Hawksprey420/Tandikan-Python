@@ -7,8 +7,17 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <h5>Enrollment for {{ term }}</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Enrollment for {{ term.academic_year }} - {{ term.get_semester_display }}</h5>
+                <div class="col-md-4">
+                    <select class="form-select" onchange="window.location.href='?term_id='+this.value">
+                        {% for t in all_terms %}
+                        <option value="{{ t.term_id }}" {% if t.term_id == term.term_id %}selected{% endif %}>
+                            {{ t.academic_year }} - {{ t.get_semester_display }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             <div class="card-body">
                 {% if messages %}
@@ -19,6 +28,7 @@
 
                 <form method="post">
                     {% csrf_token %}
+                    <input type="hidden" name="term_id" value="{{ term.term_id }}">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -37,7 +47,11 @@
                                 <tr>
                                     <td>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="schedule_ids" value="{{ schedule.schedule_id }}">
+                                            <input class="form-check-input" type="checkbox" name="schedule_ids" value="{{ schedule.schedule_id }}"
+                                            {% if schedule.schedule_id in enrolled_schedule_ids %}checked disabled{% endif %}>
+                                            {% if schedule.schedule_id in enrolled_schedule_ids %}
+                                                <span class="badge bg-success">Enrolled</span>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td>{{ schedule.subject.subject_code }} - {{ schedule.subject.subject_name }}</td>

@@ -31,52 +31,8 @@
         <div class="loader-track"><div class="loader-fill"></div></div>
     </div>
 
-    <!-- Sidebar (inlined - no partials) -->
-    <nav class="pc-sidebar">
-        <div class="navbar-wrapper">
-            <div class="m-header">
-                <a href="#" class="b-brand text-primary">
-                    <img src="{% static 'src/assets/images/logo-dark.svg' %}" class="img-fluid logo-lg" alt="logo">
-                </a>
-            </div>
-            <div class="navbar-content">
-                <ul class="pc-navbar">
-                    <li class="pc-item">
-                        <a href="{% url 'student_dashboard' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
-                            <span class="pc-mtext">Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item pc-caption">
-                        <label>Student Services</label>
-                        <i class="ti ti-dashboard"></i>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'enrollment' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-user-plus"></i></span>
-                            <span class="pc-mtext">Enrollment</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="{% url 'assessment' %}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-receipt"></i></span>
-                            <span class="pc-mtext">Assessment & Fees</span>
-                        </a>
-                    </li>
-
-                    <li class="pc-item">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-brand-chrome"></i></span>
-                            <span class="pc-mtext">Easter egg for CSD faculty</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Sidebar -->
+    {% include 'includes/sidebar.html' %}
 
     <!-- Header (inlined - no partials) -->
     <header class="pc-header">
